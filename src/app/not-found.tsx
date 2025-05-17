@@ -13,7 +13,7 @@ export default function NotFound() {
             Page introuvable
           </h1>
           <p className="mt-6 text-lg font-medium text-pretty text-gray-500 sm:text-xl/8">
-            Désolé, nous n'avons pas pu trouver la page que vous recherchez.
+            Désolé, nous n&apos;avons pas pu trouver la page que vous recherchez.
           </p>
           <div className="mt-10 flex items-center justify-center gap-x-6">
             <Link

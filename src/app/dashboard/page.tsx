@@ -1,32 +1,32 @@
 "use client";
 
-import { ChartAreaInteractive } from "@/components/chart-area-interactive";
-import { SectionCards } from "@/components/section-cards";
+// import { ChartAreaInteractive } from "@/components/chart-area-interactive";
+// import { SectionCards } from "@/components/section-cards";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDashboardStatsQuery } from "@/hooks/use-dashboard-overview";
-import { DashboardStats } from "@/types/dashboard-stat";
+// import { useDashboardStatsQuery } from "@/hooks/use-dashboard-overview";
+// import { DashboardStats } from "@/types/dashboard-stat";
 
-const defaultStats: DashboardStats = {
-  totalPosts: 0,
-  publishedPosts: 0,
-  draftPosts: 0,
-  newPostsThisMonth: 0,
-  totalComments: 0,
-  approvedComments: 0,
-  pendingComments: 0,
-  newCommentsThisMonth: 0,
-  totalCategories: 0,
-  totalTags: 0,
-  postsGrowthRate: 0,
-  approvalRate: 0,
-  charts: [],
-};
+// const defaultStats: DashboardStats = {
+//   totalPosts: 0,
+//   publishedPosts: 0,
+//   draftPosts: 0,
+//   newPostsThisMonth: 0,
+//   totalComments: 0,
+//   approvedComments: 0,
+//   pendingComments: 0,
+//   newCommentsThisMonth: 0,
+//   totalCategories: 0,
+//   totalTags: 0,
+//   postsGrowthRate: 0,
+//   approvalRate: 0,
+//   charts: [],
+// };
 
 export default function DashboardPage() {
-  const { data: stats = defaultStats } = useDashboardStatsQuery();
+  // const { data: stats = defaultStats } = useDashboardStatsQuery();
   return (
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-      {!stats.charts.length ? (
+      {/* {!stats.charts.length ? (
         <>
           <Loading />
         </>
@@ -38,9 +38,9 @@ export default function DashboardPage() {
             <ChartAreaInteractive data={stats.charts} />
           </div>
         </>
-      )}
-
-      <div className="px-4 lg:px-6">{/* <StudentsDataTable /> */}</div>
+      )} */}
+      <Loading />
+      <div className="px-4 lg:px-6">CHart and Cards section</div>
     </div>
   );
 }

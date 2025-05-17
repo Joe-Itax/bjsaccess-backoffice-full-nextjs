@@ -3,19 +3,19 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { DashboardSkeleton } from "./skeleton";
-import { useAuthRedirect } from "@/hooks/use-auth-redirect";
+// import { DashboardSkeleton } from "./skeleton";
+// import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { isLoading } = useAuthRedirect({ ifUnauthenticated: "/login" });
+  // const { isLoading } = useAuthRedirect({ ifUnauthenticated: "/login" });
 
-  if (isLoading) {
-    return <DashboardSkeleton />;
-  }
+  // if (isLoading) {
+  //   return <DashboardSkeleton />;
+  // }
 
   return (
     <SidebarProvider

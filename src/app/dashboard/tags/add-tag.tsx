@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 
-import { useCreateTagMutation } from "@/hooks/use-posts";
+// import { useCreateTagMutation } from "@/hooks/use-posts";
 
 type TagFormData = {
   name: string;
@@ -26,7 +26,7 @@ export default function AddTag() {
   });
   const [errors, setErrors] = useState<Partial<TagFormData>>({});
 
-  const { mutateAsync: createTag, isPending } = useCreateTagMutation();
+  // const { mutateAsync: createTag, isPending } = useCreateTagMutation();
 
   const validateForm = (): boolean => {
     const newErrors: Partial<TagFormData> = {};
@@ -47,7 +47,8 @@ export default function AddTag() {
 
 
     try {
-      await createTag(newTag);
+      alert(`Submitting ${newTag}`);
+      // await createTag(newTag);
 
       setFormData({
         name: ""
@@ -113,8 +114,8 @@ export default function AddTag() {
           <DialogClose asChild>
             <Button variant="outline">Annuler</Button>
           </DialogClose>
-          <Button onClick={handleSubmit} disabled={isPending}>
-            {isPending ? "En cours..." : "Ajouter"}
+          <Button onClick={handleSubmit}>
+            {true ? "En cours..." : "Ajouter"}
           </Button>
         </div>
       </DialogContent>

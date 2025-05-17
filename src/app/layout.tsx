@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { NotificationManager } from "@/components/notification-manager";
-import { ReactQueryProvider } from "@/providers/react-query-provider";
-import { TokenRefresher } from "@/components/token-refresher";
+// import { NotificationManager } from "@/components/notification-manager";
+// import { ReactQueryProvider } from "@/providers/react-query-provider";
+// import { TokenRefresher } from "@/components/token-refresher";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,11 +28,11 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <ReactQueryProvider>
+        {/* <ReactQueryProvider>
           <NotificationManager />
-          <TokenRefresher />
+          <TokenRefresher /> */}
           {children}
-        </ReactQueryProvider>
+        {/* </ReactQueryProvider> */}
       </body>
     </html>
   );

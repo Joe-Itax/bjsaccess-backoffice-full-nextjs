@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 
-import { useCreateCategoryMutation } from "@/hooks/use-posts";
+// import { useCreateCategoryMutation } from "@/hooks/use-posts";
 
 type CategoryFormData = {
   name: string;
@@ -26,11 +26,10 @@ export default function AddCategory() {
   });
   const [errors, setErrors] = useState<Partial<CategoryFormData>>({});
 
-  const { mutateAsync: createCategory, isPending } = useCreateCategoryMutation();
+  // const { mutateAsync: createCategory, isPending } = useCreateCategoryMutation();
 
   const validateForm = (): boolean => {
     const newErrors: Partial<CategoryFormData> = {};
-
 
     if (!formData.name.trim()) newErrors.name = "Le nom est requis";
 
@@ -41,16 +40,15 @@ export default function AddCategory() {
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
-    const newTag = {
-      name: formData.name,
-    };
-
+    // const newTag = {
+    //   name: formData.name,
+    // };
 
     try {
-      await createCategory(newTag);
-
+      // await createCategory(newTag);
+      alert("Submitting");
       setFormData({
-        name: ""
+        name: "",
       });
     } catch (error) {
       console.error(error);
@@ -106,15 +104,13 @@ export default function AddCategory() {
               <p className="text-red-500 text-sm">{errors.name}</p>
             )}
           </div>
-
-          
         </div>
         <div className="border-t px-6 py-4 flex justify-end gap-2">
           <DialogClose asChild>
             <Button variant="outline">Annuler</Button>
           </DialogClose>
-          <Button onClick={handleSubmit} disabled={isPending}>
-            {isPending ? "En cours..." : "Ajouter"}
+          <Button onClick={handleSubmit}>
+            {true ? "En cours..." : "Ajouter"}
           </Button>
         </div>
       </DialogContent>

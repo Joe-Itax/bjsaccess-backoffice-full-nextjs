@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useId, useRef, useState } from "react";
@@ -26,8 +25,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuthUserQuery } from "@/hooks/use-auth-user";
-import { useUpdateUserMutation } from "@/hooks/use-users";
+// import { useAuthUserQuery } from "@/hooks/use-auth-user";
+// import { useUpdateUserMutation } from "@/hooks/use-users";
 
 const initialAvatarImage = [
   {
@@ -42,7 +41,7 @@ const initialAvatarImage = [
 export default function EditProfile() {
   const id = useId();
   const [openDialog, setOpenDialog] = useState(false);
-  const { data: user } = useAuthUserQuery();
+  // const { data: user } = useAuthUserQuery();
   const maxLength = 180;
   const { value, characterCount, handleChange } = useCharacterLimit({
     maxLength,
@@ -51,19 +50,20 @@ export default function EditProfile() {
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
 
-  const { mutateAsync, isPending } = useUpdateUserMutation();
+  // const { mutateAsync, isPending } = useUpdateUserMutation();
 
   const handleSubmit = async () => {
-    if (!user) return;
-    const name = nameRef.current?.value || user.name;
-    const email = emailRef.current?.value || user.email;
-    try {
-      await mutateAsync({ id: user.id, name, email });
-    } catch (error) {
-      console.error("Erreur lors de la mise à jour du profil:", error);
-    } finally {
-      setOpenDialog(false);
-    }
+    alert("Enregistrement en cours...");
+    // if (!user) return;
+    // const name = nameRef.current?.value || user.name;
+    // const email = emailRef.current?.value || user.email;
+    // try {
+    //   await mutateAsync({ id: user.id, name, email });
+    // } catch (error) {
+    //   console.error("Erreur lors de la mise à jour du profil:", error);
+    // } finally {
+    //   setOpenDialog(false);
+    // }
   };
 
   return (
@@ -85,7 +85,7 @@ export default function EditProfile() {
               <AvatarSection />
 
               <div className="flex-1">
-                <h3 className="text-lg font-semibold">{user?.name}</h3>
+                <h3 className="text-lg font-semibold">{"user?.name"}</h3>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant={"outline"} className="px-2 py-0.5">
                     <ShieldCheckIcon className="size-4 text-primary mr-1" />
@@ -108,7 +108,7 @@ export default function EditProfile() {
                   </Label>
                   <Input
                     id={`${id}-name`}
-                    defaultValue={user?.name}
+                    defaultValue={"user?.name"}
                     placeholder="Nom complet"
                     type="text"
                     ref={nameRef}
@@ -124,7 +124,7 @@ export default function EditProfile() {
                   </Label>
                   <Input
                     id={`${id}-email`}
-                    defaultValue={user?.email}
+                    defaultValue={"user?.email"}
                     type="email"
                     ref={emailRef}
                   />
@@ -193,8 +193,8 @@ export default function EditProfile() {
           <DialogClose asChild>
             <Button variant="outline">Annuler</Button>
           </DialogClose>
-          <Button onClick={handleSubmit} disabled={isPending}>
-            {isPending ? "En cours..." : "Enregistrer"}
+          <Button onClick={handleSubmit}>
+            {true ? "En cours..." : "Enregistrer"}
           </Button>
         </div>
       </DialogContent>
@@ -208,11 +208,12 @@ function AvatarSection() {
     initialFiles: initialAvatarImage,
   });
 
-  const { data: user } = useAuthUserQuery();
-  const avatarFallback = user?.name
-    .split(" ")
-    .map((name) => name[0])
-    .join("");
+  // const { data: user } = useAuthUserQuery();
+  const avatarFallback = "user.name";
+  // user?.name
+  //   .split(" ")
+  //   .map((name) => name[0])
+  //   .join("");
 
   const currentImage = files[0]?.preview || null;
 
@@ -222,8 +223,9 @@ function AvatarSection() {
         <Avatar className="size-full rounded-full">
           <AvatarImage
             className="object-cover"
-            src={user?.profileImage || currentImage || "/placeholder-avatar.png"}
-            alt={user?.name}
+            src={currentImage || "/placeholder-avatar.png"}
+            // user?.profileImage ||
+            alt={"user?.name"}
           />
           <AvatarFallback className="rounded-full text-xl">
             {avatarFallback}

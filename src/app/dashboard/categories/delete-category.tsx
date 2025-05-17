@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Trash2Icon } from "lucide-react";
 import { Category } from "@/types/posts";
-import { useDeleteCategoryMutation } from "@/hooks/use-posts";
+// import { useDeleteCategoryMutation } from "@/hooks/use-posts";
 
 interface DeleteCategoryProps {
   category: Category;
@@ -23,12 +23,12 @@ interface DeleteCategoryProps {
 export default function DeleteCategory({ category }: DeleteCategoryProps) {
   const [openDialog, setOpenDialog] = useState(false);
 
-  const deleteCategoryMutation = useDeleteCategoryMutation();
+  // const deleteCategoryMutation = useDeleteCategoryMutation();
 
   const handleDeletePost = async () => {
     try {
       if (category?.id) {
-        await deleteCategoryMutation.mutateAsync({ categoryId: category.id });
+        // await deleteCategoryMutation.mutateAsync({ categoryId: category.id });
       }
     } catch (error) {
       console.error(error);
@@ -58,10 +58,10 @@ export default function DeleteCategory({ category }: DeleteCategoryProps) {
           <AlertDialogCancel>Annuler</AlertDialogCancel>
           <Button
             onClick={handleDeletePost}
-            disabled={deleteCategoryMutation.isPending}
+            // disabled={deleteCategoryMutation.isPending}
             variant="destructive"
           >
-            {deleteCategoryMutation.isPending ? "Suppression..." : "Supprimer"}
+            {true ? "Suppression..." : "Supprimer"}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

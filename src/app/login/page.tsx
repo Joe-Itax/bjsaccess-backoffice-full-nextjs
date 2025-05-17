@@ -5,15 +5,15 @@ import Link from "next/link";
 import { LinkIcon } from "lucide-react";
 
 import { LoginForm } from "@/components/login-form";
-import { DashboardSkeleton } from "../dashboard/skeleton";
-import { useAuthRedirect } from "@/hooks/use-auth-redirect";
+// import { DashboardSkeleton } from "../dashboard/skeleton";
+// import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 
 export default function LoginPage() {
-  const { isLoading } = useAuthRedirect({ ifAuthenticated: "/dashboard" });
+  // const { isLoading } = useAuthRedirect({ ifAuthenticated: "/dashboard" });
 
-  if (isLoading) {
-    return <DashboardSkeleton />;
-  }
+  // if (isLoading) {
+  //   return <DashboardSkeleton />;
+  // }
 
   return (
     <div className="grid min-h-svh lg:grid-cols-2">

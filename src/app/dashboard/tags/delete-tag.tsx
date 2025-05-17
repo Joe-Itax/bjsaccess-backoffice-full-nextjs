@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Trash2Icon } from "lucide-react";
-import {  Tag } from "@/types/posts";
-import {  useDeleteTagMutation } from "@/hooks/use-posts";
+import { Tag } from "@/types/posts";
+// import {  useDeleteTagMutation } from "@/hooks/use-posts";
 
 interface DeleteTagProps {
   tag: Tag;
@@ -23,12 +23,13 @@ interface DeleteTagProps {
 export default function DeleteTag({ tag }: DeleteTagProps) {
   const [openDialog, setOpenDialog] = useState(false);
 
-  const deleteTagMutation = useDeleteTagMutation();
+  // const deleteTagMutation = useDeleteTagMutation();
 
   const handleDeletePost = async () => {
     try {
       if (tag?.id) {
-        await deleteTagMutation.mutateAsync({ tagId: tag.id });
+        alert("Deleted");
+        // await deleteTagMutation.mutateAsync({ tagId: tag.id });
       }
     } catch (error) {
       console.error(error);
@@ -45,9 +46,7 @@ export default function DeleteTag({ tag }: DeleteTagProps) {
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>
-            Confirmer la suppression du tag
-          </AlertDialogTitle>
+          <AlertDialogTitle>Confirmer la suppression du tag</AlertDialogTitle>
           <AlertDialogDescription>
             Cette action est{" "}
             <span className="text-red-600 font-semibold">irréversible</span>.
@@ -56,12 +55,8 @@ export default function DeleteTag({ tag }: DeleteTagProps) {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Annuler</AlertDialogCancel>
-          <Button
-            onClick={handleDeletePost}
-            disabled={deleteTagMutation.isPending}
-            variant="destructive"
-          >
-            {deleteTagMutation.isPending ? "Suppression..." : "Supprimer"}
+          <Button onClick={handleDeletePost} variant="destructive">
+            {true ? "Suppression..." : "Supprimer"}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

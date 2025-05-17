@@ -1,7 +1,7 @@
-"use client";
+// "use client";
 
-import { getQueryClient } from "./react-query-client";
+// import { getQueryClient } from "./react-query-client";
 
-export function revalidateAuthUser() {
-  getQueryClient().invalidateQueries({ queryKey: ["auth-user"] });
-}
+// export function revalidateAuthUser() {
+//   getQueryClient().invalidateQueries({ queryKey: ["auth-user"] });
+// }
