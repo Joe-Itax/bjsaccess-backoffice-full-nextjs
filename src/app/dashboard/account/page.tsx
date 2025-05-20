@@ -1,22 +1,25 @@
 "use client";
 
+import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import EditProfile from "./edit-profile";
 import { Separator } from "@/components/ui/separator";
-// import { useAuthUserQuery } from "@/hooks/use-auth-user";
 
 export default function ProfilePage() {
-  // const { data: user } = useAuthUserQuery();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
+  if (!user) {
+    return <div>Chargement du profil...</div>;
+  }
 
-  // if (!user) {
-  //   return <div>Chargement du profil...</div>;
-  // }
+  const avatarFallback = user?.name
+    .split(" ")
+    .map((name) => name[0])
+    .join("");
 
-  const avatarFallback = "Me"
-  //  user.name
-  //   .split(" ")
-  //   .map((name) => name[0])
-  //   .join("");
+  const avatarImage = user.image ? user.image : "/placeholder-avatar.png";
+
+  console.log("user: ", user);
 
   return (
     <div className="w-full mx-auto p-6 space-y-8">
@@ -29,16 +32,17 @@ export default function ProfilePage() {
       <div className="bg-white shadow rounded-lg p-6 flex items-center space-x-6">
         <Avatar className="h-20 w-20 rounded-full">
           <AvatarImage
-            src={ "/placeholder-avatar.png"}
-            alt={"user.name"}
+            className="object-cover"
+            src={avatarImage}
+            alt={user?.name}
           />
           <AvatarFallback className="rounded-full text-xl">
             {avatarFallback}
           </AvatarFallback>
         </Avatar>
         <div>
-          <h2 className="text-2xl font-bold text-primary">user.name</h2>
-          <p className="text-muted-foreground capitalize">user.role</p>
+          <h2 className="text-2xl font-bold text-primary">{user.name}</h2>
+          <p className="text-muted-foreground capitalize">{user.role}</p>
         </div>
       </div>
 
@@ -53,12 +57,12 @@ export default function ProfilePage() {
         <Separator />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-          <InfoItem label="Nom complet" value={"user.name"} />
-          <InfoItem label="Adresse email" value={"user.email"} />
-          <InfoItem label="Rôle" value={"user.role"} />
+          <InfoItem label="Nom complet" value={user.name} />
+          <InfoItem label="Adresse email" value={user.email} />
+          <InfoItem label="Rôle" value={user.role} />
           <InfoItem
             label="Date de création"
-            value={"formatDate(user.createdAt)"}
+            value={formatDate(user.createdAt.toString())}
           />
         </div>
       </div>
@@ -75,11 +79,11 @@ function InfoItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-// function formatDate(dateString: string) {
-//   const date = new Date(dateString);
-//   return date.toLocaleDateString("fr-FR", {
-//     year: "numeric",
-//     month: "long",
-//     day: "numeric",
-//   });
-// }
+function formatDate(dateString: string) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("fr-FR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}

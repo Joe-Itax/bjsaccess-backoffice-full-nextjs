@@ -25,7 +25,8 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { LinkIcon } from "lucide-react";
-import { useAuthUserQuery } from "@/hooks/use-auth-user";
+import { authClient } from "@/lib/auth-client";
+// import { useAuthUserQuery } from "@/hooks/use-auth-user";
 
 const data = {
   user: {
@@ -70,7 +71,23 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { data: user } = useAuthUserQuery();
+  const { data: session, isPending, error, refetch } = authClient.useSession();
+  const user = session?.user;
+
+  React.useEffect(() => {
+    if (error) {
+      console.error(error);
+      refetch();
+    }
+  }, [error, refetch]);
+
+  if (isPending) {
+    return (
+      <div>
+        <p>Chargement du user</p>
+      </div>
+    );
+  }
 
   return (
     <Sidebar collapsible="icon" {...props} variant="floating">

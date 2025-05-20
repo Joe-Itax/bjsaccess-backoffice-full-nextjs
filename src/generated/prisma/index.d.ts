@@ -1779,10 +1779,7 @@ export namespace Prisma {
     email: string | null
     name: string | null
     searchableName: string | null
-    password: string | null
     role: $Enums.Role | null
-    profileImage: string | null
-    bio: string | null
     isActive: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -1795,10 +1792,7 @@ export namespace Prisma {
     email: string | null
     name: string | null
     searchableName: string | null
-    password: string | null
     role: $Enums.Role | null
-    profileImage: string | null
-    bio: string | null
     isActive: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -1811,10 +1805,7 @@ export namespace Prisma {
     email: number
     name: number
     searchableName: number
-    password: number
     role: number
-    profileImage: number
-    bio: number
     isActive: number
     createdAt: number
     updatedAt: number
@@ -1829,10 +1820,7 @@ export namespace Prisma {
     email?: true
     name?: true
     searchableName?: true
-    password?: true
     role?: true
-    profileImage?: true
-    bio?: true
     isActive?: true
     createdAt?: true
     updatedAt?: true
@@ -1845,10 +1833,7 @@ export namespace Prisma {
     email?: true
     name?: true
     searchableName?: true
-    password?: true
     role?: true
-    profileImage?: true
-    bio?: true
     isActive?: true
     createdAt?: true
     updatedAt?: true
@@ -1861,10 +1846,7 @@ export namespace Prisma {
     email?: true
     name?: true
     searchableName?: true
-    password?: true
     role?: true
-    profileImage?: true
-    bio?: true
     isActive?: true
     createdAt?: true
     updatedAt?: true
@@ -1950,10 +1932,7 @@ export namespace Prisma {
     email: string
     name: string | null
     searchableName: string
-    password: string
     role: $Enums.Role
-    profileImage: string | null
-    bio: string | null
     isActive: boolean
     createdAt: Date
     updatedAt: Date
@@ -1983,10 +1962,7 @@ export namespace Prisma {
     email?: boolean
     name?: boolean
     searchableName?: boolean
-    password?: boolean
     role?: boolean
-    profileImage?: boolean
-    bio?: boolean
     isActive?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -2003,10 +1979,7 @@ export namespace Prisma {
     email?: boolean
     name?: boolean
     searchableName?: boolean
-    password?: boolean
     role?: boolean
-    profileImage?: boolean
-    bio?: boolean
     isActive?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -2019,10 +1992,7 @@ export namespace Prisma {
     email?: boolean
     name?: boolean
     searchableName?: boolean
-    password?: boolean
     role?: boolean
-    profileImage?: boolean
-    bio?: boolean
     isActive?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -2035,10 +2005,7 @@ export namespace Prisma {
     email?: boolean
     name?: boolean
     searchableName?: boolean
-    password?: boolean
     role?: boolean
-    profileImage?: boolean
-    bio?: boolean
     isActive?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -2046,7 +2013,7 @@ export namespace Prisma {
     image?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "name" | "searchableName" | "password" | "role" | "profileImage" | "bio" | "isActive" | "createdAt" | "updatedAt" | "emailVerified" | "image", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "name" | "searchableName" | "role" | "isActive" | "createdAt" | "updatedAt" | "emailVerified" | "image", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     posts?: boolean | User$postsArgs<ExtArgs>
     sessions?: boolean | User$sessionsArgs<ExtArgs>
@@ -2068,10 +2035,7 @@ export namespace Prisma {
       email: string
       name: string | null
       searchableName: string
-      password: string
       role: $Enums.Role
-      profileImage: string | null
-      bio: string | null
       isActive: boolean
       createdAt: Date
       updatedAt: Date
@@ -2507,10 +2471,7 @@ export namespace Prisma {
     readonly email: FieldRef<"User", 'String'>
     readonly name: FieldRef<"User", 'String'>
     readonly searchableName: FieldRef<"User", 'String'>
-    readonly password: FieldRef<"User", 'String'>
     readonly role: FieldRef<"User", 'Role'>
-    readonly profileImage: FieldRef<"User", 'String'>
-    readonly bio: FieldRef<"User", 'String'>
     readonly isActive: FieldRef<"User", 'Boolean'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
@@ -4090,7 +4051,7 @@ export namespace Prisma {
   export type PostMinAggregateOutputType = {
     id: string | null
     title: string | null
-    searchableName: string | null
+    searchableTitle: string | null
     slug: string | null
     content: string | null
     published: boolean | null
@@ -4104,7 +4065,7 @@ export namespace Prisma {
   export type PostMaxAggregateOutputType = {
     id: string | null
     title: string | null
-    searchableName: string | null
+    searchableTitle: string | null
     slug: string | null
     content: string | null
     published: boolean | null
@@ -4118,7 +4079,7 @@ export namespace Prisma {
   export type PostCountAggregateOutputType = {
     id: number
     title: number
-    searchableName: number
+    searchableTitle: number
     slug: number
     content: number
     published: number
@@ -4134,7 +4095,7 @@ export namespace Prisma {
   export type PostMinAggregateInputType = {
     id?: true
     title?: true
-    searchableName?: true
+    searchableTitle?: true
     slug?: true
     content?: true
     published?: true
@@ -4148,7 +4109,7 @@ export namespace Prisma {
   export type PostMaxAggregateInputType = {
     id?: true
     title?: true
-    searchableName?: true
+    searchableTitle?: true
     slug?: true
     content?: true
     published?: true
@@ -4162,7 +4123,7 @@ export namespace Prisma {
   export type PostCountAggregateInputType = {
     id?: true
     title?: true
-    searchableName?: true
+    searchableTitle?: true
     slug?: true
     content?: true
     published?: true
@@ -4249,7 +4210,7 @@ export namespace Prisma {
   export type PostGroupByOutputType = {
     id: string
     title: string
-    searchableName: string
+    searchableTitle: string
     slug: string
     content: string
     published: boolean
@@ -4280,7 +4241,7 @@ export namespace Prisma {
   export type PostSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     title?: boolean
-    searchableName?: boolean
+    searchableTitle?: boolean
     slug?: boolean
     content?: boolean
     published?: boolean
@@ -4299,7 +4260,7 @@ export namespace Prisma {
   export type PostSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     title?: boolean
-    searchableName?: boolean
+    searchableTitle?: boolean
     slug?: boolean
     content?: boolean
     published?: boolean
@@ -4315,7 +4276,7 @@ export namespace Prisma {
   export type PostSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     title?: boolean
-    searchableName?: boolean
+    searchableTitle?: boolean
     slug?: boolean
     content?: boolean
     published?: boolean
@@ -4331,7 +4292,7 @@ export namespace Prisma {
   export type PostSelectScalar = {
     id?: boolean
     title?: boolean
-    searchableName?: boolean
+    searchableTitle?: boolean
     slug?: boolean
     content?: boolean
     published?: boolean
@@ -4342,7 +4303,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type PostOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "searchableName" | "slug" | "content" | "published" | "featuredImage" | "authorId" | "categoryId" | "createdAt" | "updatedAt", ExtArgs["result"]["post"]>
+  export type PostOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "searchableTitle" | "slug" | "content" | "published" | "featuredImage" | "authorId" | "categoryId" | "createdAt" | "updatedAt", ExtArgs["result"]["post"]>
   export type PostInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     author?: boolean | UserDefaultArgs<ExtArgs>
     category?: boolean | CategoryDefaultArgs<ExtArgs>
@@ -4370,7 +4331,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       title: string
-      searchableName: string
+      searchableTitle: string
       slug: string
       content: string
       published: boolean
@@ -4808,7 +4769,7 @@ export namespace Prisma {
   interface PostFieldRefs {
     readonly id: FieldRef<"Post", 'String'>
     readonly title: FieldRef<"Post", 'String'>
-    readonly searchableName: FieldRef<"Post", 'String'>
+    readonly searchableTitle: FieldRef<"Post", 'String'>
     readonly slug: FieldRef<"Post", 'String'>
     readonly content: FieldRef<"Post", 'String'>
     readonly published: FieldRef<"Post", 'Boolean'>
@@ -11772,10 +11733,7 @@ export namespace Prisma {
     email: 'email',
     name: 'name',
     searchableName: 'searchableName',
-    password: 'password',
     role: 'role',
-    profileImage: 'profileImage',
-    bio: 'bio',
     isActive: 'isActive',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
@@ -11801,7 +11759,7 @@ export namespace Prisma {
   export const PostScalarFieldEnum: {
     id: 'id',
     title: 'title',
-    searchableName: 'searchableName',
+    searchableTitle: 'searchableTitle',
     slug: 'slug',
     content: 'content',
     published: 'published',
@@ -11997,10 +11955,7 @@ export namespace Prisma {
     email?: StringFilter<"User"> | string
     name?: StringNullableFilter<"User"> | string | null
     searchableName?: StringFilter<"User"> | string
-    password?: StringFilter<"User"> | string
     role?: EnumRoleFilter<"User"> | $Enums.Role
-    profileImage?: StringNullableFilter<"User"> | string | null
-    bio?: StringNullableFilter<"User"> | string | null
     isActive?: BoolFilter<"User"> | boolean
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
@@ -12016,10 +11971,7 @@ export namespace Prisma {
     email?: SortOrder
     name?: SortOrderInput | SortOrder
     searchableName?: SortOrder
-    password?: SortOrder
     role?: SortOrder
-    profileImage?: SortOrderInput | SortOrder
-    bio?: SortOrderInput | SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -12038,10 +11990,7 @@ export namespace Prisma {
     NOT?: UserWhereInput | UserWhereInput[]
     name?: StringNullableFilter<"User"> | string | null
     searchableName?: StringFilter<"User"> | string
-    password?: StringFilter<"User"> | string
     role?: EnumRoleFilter<"User"> | $Enums.Role
-    profileImage?: StringNullableFilter<"User"> | string | null
-    bio?: StringNullableFilter<"User"> | string | null
     isActive?: BoolFilter<"User"> | boolean
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
@@ -12057,10 +12006,7 @@ export namespace Prisma {
     email?: SortOrder
     name?: SortOrderInput | SortOrder
     searchableName?: SortOrder
-    password?: SortOrder
     role?: SortOrder
-    profileImage?: SortOrderInput | SortOrder
-    bio?: SortOrderInput | SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -12079,10 +12025,7 @@ export namespace Prisma {
     email?: StringWithAggregatesFilter<"User"> | string
     name?: StringNullableWithAggregatesFilter<"User"> | string | null
     searchableName?: StringWithAggregatesFilter<"User"> | string
-    password?: StringWithAggregatesFilter<"User"> | string
     role?: EnumRoleWithAggregatesFilter<"User"> | $Enums.Role
-    profileImage?: StringNullableWithAggregatesFilter<"User"> | string | null
-    bio?: StringNullableWithAggregatesFilter<"User"> | string | null
     isActive?: BoolWithAggregatesFilter<"User"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -12156,7 +12099,7 @@ export namespace Prisma {
     NOT?: PostWhereInput | PostWhereInput[]
     id?: StringFilter<"Post"> | string
     title?: StringFilter<"Post"> | string
-    searchableName?: StringFilter<"Post"> | string
+    searchableTitle?: StringFilter<"Post"> | string
     slug?: StringFilter<"Post"> | string
     content?: StringFilter<"Post"> | string
     published?: BoolFilter<"Post"> | boolean
@@ -12174,7 +12117,7 @@ export namespace Prisma {
   export type PostOrderByWithRelationInput = {
     id?: SortOrder
     title?: SortOrder
-    searchableName?: SortOrder
+    searchableTitle?: SortOrder
     slug?: SortOrder
     content?: SortOrder
     published?: SortOrder
@@ -12196,7 +12139,7 @@ export namespace Prisma {
     OR?: PostWhereInput[]
     NOT?: PostWhereInput | PostWhereInput[]
     title?: StringFilter<"Post"> | string
-    searchableName?: StringFilter<"Post"> | string
+    searchableTitle?: StringFilter<"Post"> | string
     content?: StringFilter<"Post"> | string
     published?: BoolFilter<"Post"> | boolean
     featuredImage?: StringNullableFilter<"Post"> | string | null
@@ -12213,7 +12156,7 @@ export namespace Prisma {
   export type PostOrderByWithAggregationInput = {
     id?: SortOrder
     title?: SortOrder
-    searchableName?: SortOrder
+    searchableTitle?: SortOrder
     slug?: SortOrder
     content?: SortOrder
     published?: SortOrder
@@ -12233,7 +12176,7 @@ export namespace Prisma {
     NOT?: PostScalarWhereWithAggregatesInput | PostScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Post"> | string
     title?: StringWithAggregatesFilter<"Post"> | string
-    searchableName?: StringWithAggregatesFilter<"Post"> | string
+    searchableTitle?: StringWithAggregatesFilter<"Post"> | string
     slug?: StringWithAggregatesFilter<"Post"> | string
     content?: StringWithAggregatesFilter<"Post"> | string
     published?: BoolWithAggregatesFilter<"Post"> | boolean
@@ -12645,10 +12588,7 @@ export namespace Prisma {
     email: string
     name?: string | null
     searchableName?: string
-    password: string
     role?: $Enums.Role
-    profileImage?: string | null
-    bio?: string | null
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -12664,10 +12604,7 @@ export namespace Prisma {
     email: string
     name?: string | null
     searchableName?: string
-    password: string
     role?: $Enums.Role
-    profileImage?: string | null
-    bio?: string | null
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -12683,10 +12620,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     searchableName?: StringFieldUpdateOperationsInput | string
-    password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    profileImage?: NullableStringFieldUpdateOperationsInput | string | null
-    bio?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12702,10 +12636,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     searchableName?: StringFieldUpdateOperationsInput | string
-    password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    profileImage?: NullableStringFieldUpdateOperationsInput | string | null
-    bio?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12721,10 +12652,7 @@ export namespace Prisma {
     email: string
     name?: string | null
     searchableName?: string
-    password: string
     role?: $Enums.Role
-    profileImage?: string | null
-    bio?: string | null
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -12737,10 +12665,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     searchableName?: StringFieldUpdateOperationsInput | string
-    password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    profileImage?: NullableStringFieldUpdateOperationsInput | string | null
-    bio?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12753,10 +12678,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     searchableName?: StringFieldUpdateOperationsInput | string
-    password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    profileImage?: NullableStringFieldUpdateOperationsInput | string | null
-    bio?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12834,7 +12756,7 @@ export namespace Prisma {
   export type PostCreateInput = {
     id?: string
     title: string
-    searchableName?: string
+    searchableTitle?: string
     slug: string
     content: string
     published?: boolean
@@ -12850,7 +12772,7 @@ export namespace Prisma {
   export type PostUncheckedCreateInput = {
     id?: string
     title: string
-    searchableName?: string
+    searchableTitle?: string
     slug: string
     content: string
     published?: boolean
@@ -12866,7 +12788,7 @@ export namespace Prisma {
   export type PostUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
-    searchableName?: StringFieldUpdateOperationsInput | string
+    searchableTitle?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     published?: BoolFieldUpdateOperationsInput | boolean
@@ -12882,7 +12804,7 @@ export namespace Prisma {
   export type PostUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
-    searchableName?: StringFieldUpdateOperationsInput | string
+    searchableTitle?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     published?: BoolFieldUpdateOperationsInput | boolean
@@ -12898,7 +12820,7 @@ export namespace Prisma {
   export type PostCreateManyInput = {
     id?: string
     title: string
-    searchableName?: string
+    searchableTitle?: string
     slug: string
     content: string
     published?: boolean
@@ -12912,7 +12834,7 @@ export namespace Prisma {
   export type PostUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
-    searchableName?: StringFieldUpdateOperationsInput | string
+    searchableTitle?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     published?: BoolFieldUpdateOperationsInput | boolean
@@ -12924,7 +12846,7 @@ export namespace Prisma {
   export type PostUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
-    searchableName?: StringFieldUpdateOperationsInput | string
+    searchableTitle?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     published?: BoolFieldUpdateOperationsInput | boolean
@@ -13454,10 +13376,7 @@ export namespace Prisma {
     email?: SortOrder
     name?: SortOrder
     searchableName?: SortOrder
-    password?: SortOrder
     role?: SortOrder
-    profileImage?: SortOrder
-    bio?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -13470,10 +13389,7 @@ export namespace Prisma {
     email?: SortOrder
     name?: SortOrder
     searchableName?: SortOrder
-    password?: SortOrder
     role?: SortOrder
-    profileImage?: SortOrder
-    bio?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -13486,10 +13402,7 @@ export namespace Prisma {
     email?: SortOrder
     name?: SortOrder
     searchableName?: SortOrder
-    password?: SortOrder
     role?: SortOrder
-    profileImage?: SortOrder
-    bio?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -13625,7 +13538,7 @@ export namespace Prisma {
   export type PostCountOrderByAggregateInput = {
     id?: SortOrder
     title?: SortOrder
-    searchableName?: SortOrder
+    searchableTitle?: SortOrder
     slug?: SortOrder
     content?: SortOrder
     published?: SortOrder
@@ -13639,7 +13552,7 @@ export namespace Prisma {
   export type PostMaxOrderByAggregateInput = {
     id?: SortOrder
     title?: SortOrder
-    searchableName?: SortOrder
+    searchableTitle?: SortOrder
     slug?: SortOrder
     content?: SortOrder
     published?: SortOrder
@@ -13653,7 +13566,7 @@ export namespace Prisma {
   export type PostMinOrderByAggregateInput = {
     id?: SortOrder
     title?: SortOrder
-    searchableName?: SortOrder
+    searchableTitle?: SortOrder
     slug?: SortOrder
     content?: SortOrder
     published?: SortOrder
@@ -14470,7 +14383,7 @@ export namespace Prisma {
   export type PostCreateWithoutAuthorInput = {
     id?: string
     title: string
-    searchableName?: string
+    searchableTitle?: string
     slug: string
     content: string
     published?: boolean
@@ -14485,7 +14398,7 @@ export namespace Prisma {
   export type PostUncheckedCreateWithoutAuthorInput = {
     id?: string
     title: string
-    searchableName?: string
+    searchableTitle?: string
     slug: string
     content: string
     published?: boolean
@@ -14599,7 +14512,7 @@ export namespace Prisma {
     NOT?: PostScalarWhereInput | PostScalarWhereInput[]
     id?: StringFilter<"Post"> | string
     title?: StringFilter<"Post"> | string
-    searchableName?: StringFilter<"Post"> | string
+    searchableTitle?: StringFilter<"Post"> | string
     slug?: StringFilter<"Post"> | string
     content?: StringFilter<"Post"> | string
     published?: BoolFilter<"Post"> | boolean
@@ -14678,7 +14591,7 @@ export namespace Prisma {
   export type PostCreateWithoutCategoryInput = {
     id?: string
     title: string
-    searchableName?: string
+    searchableTitle?: string
     slug: string
     content: string
     published?: boolean
@@ -14693,7 +14606,7 @@ export namespace Prisma {
   export type PostUncheckedCreateWithoutCategoryInput = {
     id?: string
     title: string
-    searchableName?: string
+    searchableTitle?: string
     slug: string
     content: string
     published?: boolean
@@ -14736,10 +14649,7 @@ export namespace Prisma {
     email: string
     name?: string | null
     searchableName?: string
-    password: string
     role?: $Enums.Role
-    profileImage?: string | null
-    bio?: string | null
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -14754,10 +14664,7 @@ export namespace Prisma {
     email: string
     name?: string | null
     searchableName?: string
-    password: string
     role?: $Enums.Role
-    profileImage?: string | null
-    bio?: string | null
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -14861,10 +14768,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     searchableName?: StringFieldUpdateOperationsInput | string
-    password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    profileImage?: NullableStringFieldUpdateOperationsInput | string | null
-    bio?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14879,10 +14783,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     searchableName?: StringFieldUpdateOperationsInput | string
-    password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    profileImage?: NullableStringFieldUpdateOperationsInput | string | null
-    bio?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15015,7 +14916,7 @@ export namespace Prisma {
   export type PostCreateWithoutTagsInput = {
     id?: string
     title: string
-    searchableName?: string
+    searchableTitle?: string
     slug: string
     content: string
     published?: boolean
@@ -15030,7 +14931,7 @@ export namespace Prisma {
   export type PostUncheckedCreateWithoutTagsInput = {
     id?: string
     title: string
-    searchableName?: string
+    searchableTitle?: string
     slug: string
     content: string
     published?: boolean
@@ -15082,7 +14983,7 @@ export namespace Prisma {
   export type PostUpdateWithoutTagsInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
-    searchableName?: StringFieldUpdateOperationsInput | string
+    searchableTitle?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     published?: BoolFieldUpdateOperationsInput | boolean
@@ -15097,7 +14998,7 @@ export namespace Prisma {
   export type PostUncheckedUpdateWithoutTagsInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
-    searchableName?: StringFieldUpdateOperationsInput | string
+    searchableTitle?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     published?: BoolFieldUpdateOperationsInput | boolean
@@ -15139,7 +15040,7 @@ export namespace Prisma {
   export type PostCreateWithoutCommentsInput = {
     id?: string
     title: string
-    searchableName?: string
+    searchableTitle?: string
     slug: string
     content: string
     published?: boolean
@@ -15154,7 +15055,7 @@ export namespace Prisma {
   export type PostUncheckedCreateWithoutCommentsInput = {
     id?: string
     title: string
-    searchableName?: string
+    searchableTitle?: string
     slug: string
     content: string
     published?: boolean
@@ -15185,7 +15086,7 @@ export namespace Prisma {
   export type PostUpdateWithoutCommentsInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
-    searchableName?: StringFieldUpdateOperationsInput | string
+    searchableTitle?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     published?: BoolFieldUpdateOperationsInput | boolean
@@ -15200,7 +15101,7 @@ export namespace Prisma {
   export type PostUncheckedUpdateWithoutCommentsInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
-    searchableName?: StringFieldUpdateOperationsInput | string
+    searchableTitle?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     published?: BoolFieldUpdateOperationsInput | boolean
@@ -15217,10 +15118,7 @@ export namespace Prisma {
     email: string
     name?: string | null
     searchableName?: string
-    password: string
     role?: $Enums.Role
-    profileImage?: string | null
-    bio?: string | null
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -15235,10 +15133,7 @@ export namespace Prisma {
     email: string
     name?: string | null
     searchableName?: string
-    password: string
     role?: $Enums.Role
-    profileImage?: string | null
-    bio?: string | null
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -15269,10 +15164,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     searchableName?: StringFieldUpdateOperationsInput | string
-    password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    profileImage?: NullableStringFieldUpdateOperationsInput | string | null
-    bio?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15287,10 +15179,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     searchableName?: StringFieldUpdateOperationsInput | string
-    password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    profileImage?: NullableStringFieldUpdateOperationsInput | string | null
-    bio?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15305,10 +15194,7 @@ export namespace Prisma {
     email: string
     name?: string | null
     searchableName?: string
-    password: string
     role?: $Enums.Role
-    profileImage?: string | null
-    bio?: string | null
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -15323,10 +15209,7 @@ export namespace Prisma {
     email: string
     name?: string | null
     searchableName?: string
-    password: string
     role?: $Enums.Role
-    profileImage?: string | null
-    bio?: string | null
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -15357,10 +15240,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     searchableName?: StringFieldUpdateOperationsInput | string
-    password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    profileImage?: NullableStringFieldUpdateOperationsInput | string | null
-    bio?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15375,10 +15255,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
     searchableName?: StringFieldUpdateOperationsInput | string
-    password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    profileImage?: NullableStringFieldUpdateOperationsInput | string | null
-    bio?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15391,7 +15268,7 @@ export namespace Prisma {
   export type PostCreateManyAuthorInput = {
     id?: string
     title: string
-    searchableName?: string
+    searchableTitle?: string
     slug: string
     content: string
     published?: boolean
@@ -15429,7 +15306,7 @@ export namespace Prisma {
   export type PostUpdateWithoutAuthorInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
-    searchableName?: StringFieldUpdateOperationsInput | string
+    searchableTitle?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     published?: BoolFieldUpdateOperationsInput | boolean
@@ -15444,7 +15321,7 @@ export namespace Prisma {
   export type PostUncheckedUpdateWithoutAuthorInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
-    searchableName?: StringFieldUpdateOperationsInput | string
+    searchableTitle?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     published?: BoolFieldUpdateOperationsInput | boolean
@@ -15459,7 +15336,7 @@ export namespace Prisma {
   export type PostUncheckedUpdateManyWithoutAuthorInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
-    searchableName?: StringFieldUpdateOperationsInput | string
+    searchableTitle?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     published?: BoolFieldUpdateOperationsInput | boolean
@@ -15547,7 +15424,7 @@ export namespace Prisma {
   export type PostCreateManyCategoryInput = {
     id?: string
     title: string
-    searchableName?: string
+    searchableTitle?: string
     slug: string
     content: string
     published?: boolean
@@ -15560,7 +15437,7 @@ export namespace Prisma {
   export type PostUpdateWithoutCategoryInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
-    searchableName?: StringFieldUpdateOperationsInput | string
+    searchableTitle?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     published?: BoolFieldUpdateOperationsInput | boolean
@@ -15575,7 +15452,7 @@ export namespace Prisma {
   export type PostUncheckedUpdateWithoutCategoryInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
-    searchableName?: StringFieldUpdateOperationsInput | string
+    searchableTitle?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     published?: BoolFieldUpdateOperationsInput | boolean
@@ -15590,7 +15467,7 @@ export namespace Prisma {
   export type PostUncheckedUpdateManyWithoutCategoryInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
-    searchableName?: StringFieldUpdateOperationsInput | string
+    searchableTitle?: StringFieldUpdateOperationsInput | string
     slug?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     published?: BoolFieldUpdateOperationsInput | boolean

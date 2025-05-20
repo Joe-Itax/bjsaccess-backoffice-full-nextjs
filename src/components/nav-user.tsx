@@ -29,7 +29,10 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
-import { useLogoutMutation } from "@/hooks/use-auth-user";
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import { useNotification } from "@/hooks/use-notification";
+// import { useLogoutMutation } from "@/hooks/use-auth-user";
 
 export function NavUser({
   user,
@@ -42,9 +45,25 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
-  const logoutMutation = useLogoutMutation();
-  const handleLogout = () => {
-    logoutMutation.mutate();
+  const { signOut } = authClient;
+  const { show } = useNotification();
+  const router = useRouter();
+  const handleLogout = async () => {
+    try {
+      await signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            show("note", "Vous vous êtes deconnecté.");
+            router.push("/login");
+          },
+          onError: () => {
+            show("note", "Une erreur est survenue lors de la deconnexion.");
+          },
+        },
+      });
+    } catch (error) {
+      console.error(error);
+    }
   };
   const avatarFallback = user.name
     .split(" ")

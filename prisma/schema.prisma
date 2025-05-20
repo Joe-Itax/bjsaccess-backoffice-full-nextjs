@@ -19,10 +19,7 @@ model User {
   email          String   @unique
   name           String?
   searchableName String   @default("")
-  password       String
   role           Role     @default(AUTHOR)
-  profileImage   String?
-  bio            String?
   isActive       Boolean  @default(true)
   posts          Post[]
   createdAt      DateTime @default(now())
@@ -33,7 +30,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
-  @@index([name, email])
+  @@index([searchableName, email])
   @@map("user")
 }
 
@@ -55,7 +52,7 @@ model Category {
 model Post {
   id             String        @id @default(uuid())
   title          String
-  searchableName String        @default("")
+  searchableTitle String        @default("")
   slug           String        @unique
   content        String
   published      Boolean       @default(false)
@@ -69,7 +66,7 @@ model Post {
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
-  @@index([title, slug])
+  @@index([searchableTitle, slug])
 }
 
 model Tag {

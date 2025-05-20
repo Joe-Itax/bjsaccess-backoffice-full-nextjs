@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useId, useRef, useState, type InputHTMLAttributes } from "react";
 import {
   EditIcon,
   ImagePlusIcon,
@@ -8,9 +8,10 @@ import {
   PhoneIcon,
   CakeIcon,
   ShieldCheckIcon,
+  LockIcon,
 } from "lucide-react";
 import { useCharacterLimit } from "@/hooks/use-character-limit";
-import { useFileUpload } from "@/hooks/use-file-upload";
+import { FileWithPreview, useFileUpload } from "@/hooks/use-file-upload";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,8 +26,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-// import { useAuthUserQuery } from "@/hooks/use-auth-user";
-// import { useUpdateUserMutation } from "@/hooks/use-users";
+import { authClient } from "@/lib/auth-client";
+import { useNotification } from "@/hooks/use-notification";
 
 const initialAvatarImage = [
   {
@@ -41,7 +42,13 @@ const initialAvatarImage = [
 export default function EditProfile() {
   const id = useId();
   const [openDialog, setOpenDialog] = useState(false);
-  // const { data: user } = useAuthUserQuery();
+  const [isPending, setIsPending] = useState(false);
+  const [{ files }, { openFileDialog, getInputProps }] = useFileUpload({
+    accept: "image/*",
+    initialFiles: initialAvatarImage,
+  });
+  const { data: session, refetch } = authClient.useSession();
+  const user = session?.user;
   const maxLength = 180;
   const { value, characterCount, handleChange } = useCharacterLimit({
     maxLength,
@@ -49,21 +56,54 @@ export default function EditProfile() {
   });
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
-
-  // const { mutateAsync, isPending } = useUpdateUserMutation();
+  const currentPasswordRef = useRef<HTMLInputElement>(null);
+  const newPasswordRef = useRef<HTMLInputElement>(null);
+  const { show } = useNotification();
 
   const handleSubmit = async () => {
-    alert("Enregistrement en cours...");
-    // if (!user) return;
-    // const name = nameRef.current?.value || user.name;
-    // const email = emailRef.current?.value || user.email;
-    // try {
-    //   await mutateAsync({ id: user.id, name, email });
-    // } catch (error) {
-    //   console.error("Erreur lors de la mise à jour du profil:", error);
-    // } finally {
-    //   setOpenDialog(false);
-    // }
+    setIsPending(true);
+    if (!user) return;
+
+    const formData = new FormData();
+
+    const name = nameRef.current?.value || user.name;
+    const email = emailRef.current?.value || user.email;
+    const currentPassword = currentPasswordRef.current?.value;
+    const newPassword = newPasswordRef.current?.value;
+    const file = files[0]?.file;
+
+    try {
+      formData.append("action", "update");
+      formData.append("name", name);
+      formData.append("email", email);
+
+      if (file) {
+        formData.append("avatar", file as Blob);
+      }
+
+      if (currentPassword && newPassword) {
+        formData.append("currentPassword", currentPassword as string);
+        formData.append("newPassword", newPassword as string);
+      }
+
+      // Must revalidate currentUser after
+      const res = await fetch("/api/user", {
+        method: "PUT",
+        body: formData,
+      });
+
+      const data = await res.json();
+      console.log("data from handleSubmitUpdateProfile - 96 line: ", data);
+      if (!res.ok) throw new Error(data.message || "Une erreur s’est produite");
+
+      refetch();
+      show("success", "Votre profil a été mis à jour avec succès.");
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du profil:", error);
+    } finally {
+      setOpenDialog(false);
+      setIsPending(false);
+    }
   };
 
   return (
@@ -82,14 +122,18 @@ export default function EditProfile() {
         <div className="overflow-y-auto max-h-[80vh]">
           <div className="px-6 pt-6 pb-4">
             <div className="flex items-start gap-4">
-              <AvatarSection />
+              <AvatarSection
+                files={files}
+                openFileDialog={openFileDialog}
+                getInputProps={getInputProps}
+              />
 
               <div className="flex-1">
-                <h3 className="text-lg font-semibold">{"user?.name"}</h3>
+                <h3 className="text-lg font-semibold">{user?.name}</h3>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant={"outline"} className="px-2 py-0.5">
                     <ShieldCheckIcon className="size-4 text-primary mr-1" />
-                    Admin
+                    {user?.role}
                   </Badge>
                 </div>
               </div>
@@ -108,7 +152,7 @@ export default function EditProfile() {
                   </Label>
                   <Input
                     id={`${id}-name`}
-                    defaultValue={"user?.name"}
+                    defaultValue={user?.name}
                     placeholder="Nom complet"
                     type="text"
                     ref={nameRef}
@@ -124,9 +168,39 @@ export default function EditProfile() {
                   </Label>
                   <Input
                     id={`${id}-email`}
-                    defaultValue={"user?.email"}
+                    defaultValue={user?.email}
                     type="email"
                     ref={emailRef}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor={`${id}-password`}>
+                    <span className="flex items-center gap-2">
+                      <LockIcon size={16} />
+                      <span>Ancien Password</span>
+                    </span>
+                  </Label>
+                  <Input
+                    id={`${id}-password`}
+                    defaultValue={""}
+                    type="password"
+                    ref={currentPasswordRef}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor={`${id}-password`}>
+                    <span className="flex items-center gap-2">
+                      <LockIcon size={16} />
+                      <span>Nouveau password</span>
+                    </span>
+                  </Label>
+                  <Input
+                    id={`${id}-password`}
+                    defaultValue={""}
+                    type="password"
+                    ref={newPasswordRef}
                   />
                 </div>
 
@@ -164,7 +238,7 @@ export default function EditProfile() {
                   <Label htmlFor={`${id}-role`}>Rôle</Label>
                   <Input
                     id={`${id}-role`}
-                    defaultValue="Admin"
+                    defaultValue={user?.role}
                     type="text"
                     disabled
                   />
@@ -194,7 +268,7 @@ export default function EditProfile() {
             <Button variant="outline">Annuler</Button>
           </DialogClose>
           <Button onClick={handleSubmit}>
-            {true ? "En cours..." : "Enregistrer"}
+            {isPending ? "En cours..." : "Enregistrer"}
           </Button>
         </div>
       </DialogContent>
@@ -202,20 +276,29 @@ export default function EditProfile() {
   );
 }
 
-function AvatarSection() {
-  const [{ files }, { openFileDialog, getInputProps }] = useFileUpload({
-    accept: "image/*",
-    initialFiles: initialAvatarImage,
-  });
+interface avatarSectionProps {
+  files?: FileWithPreview[];
+  openFileDialog: () => void;
+  getInputProps: (
+    props?: InputHTMLAttributes<HTMLInputElement>
+  ) => InputHTMLAttributes<HTMLInputElement> & {
+    ref: React.Ref<HTMLInputElement>;
+  };
+}
+function AvatarSection({
+  files,
+  openFileDialog,
+  getInputProps,
+}: avatarSectionProps) {
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
+  const avatarFallback = user?.name
+    .split(" ")
+    .map((name) => name[0])
+    .join("");
 
-  // const { data: user } = useAuthUserQuery();
-  const avatarFallback = "user.name";
-  // user?.name
-  //   .split(" ")
-  //   .map((name) => name[0])
-  //   .join("");
-
-  const currentImage = files[0]?.preview || null;
+  const currentImage =
+    files?.[0]?.preview || user?.image || "/placeholder-avatar.png";
 
   return (
     <div className="relative">
@@ -223,9 +306,8 @@ function AvatarSection() {
         <Avatar className="size-full rounded-full">
           <AvatarImage
             className="object-cover"
-            src={currentImage || "/placeholder-avatar.png"}
-            // user?.profileImage ||
-            alt={"user?.name"}
+            src={currentImage}
+            alt={user?.name}
           />
           <AvatarFallback className="rounded-full text-xl">
             {avatarFallback}

@@ -1,7 +1,8 @@
-"use client";
+
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
+import { UserState } from "@/components/user-state";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 // import { DashboardSkeleton } from "./skeleton";
 // import { useAuthRedirect } from "@/hooks/use-auth-redirect";
@@ -26,6 +27,7 @@ export default function DashboardLayout({
         } as React.CSSProperties
       }
     >
+      <UserState />
       <AppSidebar variant="inset" />
       <SidebarInset>
         <SiteHeader />
