@@ -71,7 +71,7 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { data: session, isPending, error, refetch } = authClient.useSession();
+  const { data: session, error, refetch } = authClient.useSession();
   const user = session?.user;
 
   React.useEffect(() => {
@@ -80,14 +80,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       refetch();
     }
   }, [error, refetch]);
-
-  if (isPending) {
-    return (
-      <div>
-        <p>Chargement du user</p>
-      </div>
-    );
-  }
 
   return (
     <Sidebar collapsible="icon" {...props} variant="floating">
@@ -111,7 +103,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user || { name: "", email: "", avatar: "" }} />
+        {!user ? (
+          <div className="flex justify-center items-center">
+            <div className="size-5 animate-spin rounded-full border-4 border-primary border-t-white"></div>
+          </div>
+        ) : (
+          <NavUser user={user} />
+        )}
       </SidebarFooter>
     </Sidebar>
   );

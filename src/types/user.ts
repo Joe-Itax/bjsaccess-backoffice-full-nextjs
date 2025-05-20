@@ -5,8 +5,10 @@ export interface User {
   email: string;
   role: string;
   name: string;
-  profileImage: string | null;
+  image: string | Blob | null;
   isActive: boolean;
+  emailVerified: boolean;
+  searchableName: string;
   postsCount: number;
   posts: Post[];
   password: string; // only for new users

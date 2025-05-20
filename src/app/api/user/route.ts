@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { handleUpload, slugify } from "@/lib/middlewares/upload-file";
 import { requireRole } from "@/lib/middlewares/require-role";
+import { removeAccents } from "@/utils/user-utils";
 
 export const config = {
   api: {
@@ -12,85 +13,57 @@ export const config = {
 };
 
 // -------- PUT: Update Profile or Admin Update --------
+
 export async function PUT(req: NextRequest) {
-  const formData = await req.formData();
-  const name = formData.get("name") as string;
-  const newEmail = formData.get("email") as string;
-  const file = formData.get("avatar") as Blob | null;
-  const currentPassword = formData.get("currentPassword") as string;
-  const newPassword = formData.get("newPassword") as string;
+  const contentType = req.headers.get("content-type");
+
+  const session = await auth.api.getSession({ headers: await headers() });
+  const currentUser = session?.user;
+
+  if (!currentUser)
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   try {
-    // Get Current Session
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    const user = session?.user;
-
-    const contentType = req.headers.get("content-type");
-
-    if (!user)
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-
     if (contentType?.includes("multipart/form-data")) {
-      let imagePath;
+      const formData = await req.formData();
+      const name = formData.get("name") as string;
+      const newEmail = formData.get("email") as string;
+      const file = formData.get("avatar") as Blob | null;
+      const currentPassword = formData.get("currentPassword") as string;
+      const newPassword = formData.get("newPassword") as string;
 
-      if (!user)
-        return NextResponse.json(
-          { error: "Utilisateur introuvable" },
-          { status: 404 }
-        );
-
+      // Avatar
       if (file && file.size > 0) {
-        imagePath = await handleUpload({
+        const imagePath = await handleUpload({
           file,
           folder: "avatars",
-          filenamePrefix: `avatar-${user.id}-${slugify(name)}`,
+          filenamePrefix: `avatar-${currentUser.id}-${slugify(name)}`,
         });
-        try {
-          await auth.api.updateUser({
-            body: {
-              image: imagePath,
-            },
-            headers: await headers(),
-          });
-        } catch (error) {
-          console.log("Erreur lors de la mise à jour de l'avatar", error);
-        }
-      }
-
-      // Changement email
-      if (name && name !== user.name) {
-        try {
-          await auth.api.updateUser({
-            body: {
-              name,
-            },
-            headers: await headers(),
-          });
-          return NextResponse.json({ message: "Nom modifié" });
-        } catch (error) {
-          console.log("Erreur lors de la mise à jour du nom", error);
-        }
-      }
-    }
-
-    // Changement email
-    if (newEmail && newEmail !== user.email) {
-      try {
-        await auth.api.changeEmail({
-          body: { newEmail: newEmail },
+        await auth.api.updateUser({
+          body: { image: imagePath },
           headers: await headers(),
         });
-        return NextResponse.json({ message: "Email modifié" });
-      } catch (error) {
-        console.log("Erreur lors de la mise à jour de l'email", error);
       }
-    }
 
-    // Changement password
-    if (newPassword && currentPassword) {
-      try {
+      // Nom
+      if (name && name !== currentUser.name) {
+        const searchableName = removeAccents(name);
+        await auth.api.updateUser({
+          body: { name, searchableName },
+          headers: await headers(),
+        });
+      }
+
+      // Email
+      if (newEmail && newEmail !== currentUser.email) {
+        await auth.api.changeEmail({
+          body: { newEmail },
+          headers: await headers(),
+        });
+      }
+
+      // Mot de passe
+      if (newPassword && currentPassword) {
         await auth.api.changePassword({
           body: {
             newPassword,
@@ -99,20 +72,46 @@ export async function PUT(req: NextRequest) {
           },
           headers: await headers(),
         });
-        return NextResponse.json({ message: "Mot de passe modifié" });
-      } catch (error) {
-        console.log("Erreur lors de la mise à jour du mot de passe", error);
       }
+
+      return NextResponse.json({
+        message: "Votre profil a été mis à jour avec succès.",
+      });
     }
 
-    return NextResponse.json({
-      message: "Votre profil a été mise à jour avec succès.",
-    });
+    // ADMIN update: role & isActive
+    if (contentType?.includes("application/json")) {
+      const body = await req.json();
+      const { userId, role, isActive } = body;
+
+      // Vérifie si l'utilisateur est un ADMIN
+      if (currentUser.role !== "ADMIN") {
+        return NextResponse.json({ error: "Accès interdit" }, { status: 403 });
+      }
+
+      if (!userId) {
+        return NextResponse.json({ error: "userId requis" }, { status: 400 });
+      }
+
+      // Update ciblé (role / isActive)
+      await auth.api.updateUser({
+        body: {
+          id: userId,
+          ...(role && { role }),
+          ...(typeof isActive === "boolean" && { isActive }),
+        },
+        headers: await headers(),
+      });
+
+      return NextResponse.json({ message: "Utilisateur mis à jour" });
+    }
+
+    return NextResponse.json({ error: "Requête invalide" }, { status: 400 });
   } catch (error) {
-    console.log(error);
+    console.log("Erreur PUT /api/user", error);
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Internal Server Error",
+        error: error instanceof Error ? error.message : "Erreur serveur",
       },
       { status: 500 }
     );

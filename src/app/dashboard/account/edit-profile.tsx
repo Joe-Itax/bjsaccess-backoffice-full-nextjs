@@ -267,8 +267,11 @@ export default function EditProfile() {
           <DialogClose asChild>
             <Button variant="outline">Annuler</Button>
           </DialogClose>
-          <Button onClick={handleSubmit}>
+          <Button onClick={handleSubmit} disabled={isPending}>
             {isPending ? "En cours..." : "Enregistrer"}
+            {isPending && (
+              <div className="size-5 animate-spin rounded-full border-4 border-primary border-t-white"></div>
+            )}
           </Button>
         </div>
       </DialogContent>

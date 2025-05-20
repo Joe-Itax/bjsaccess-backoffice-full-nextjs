@@ -1,30 +1,31 @@
-// "use client";
+"use client";
 
-// import { useEffect } from "react";
-// import { useRouter } from "next/navigation";
-// import { useAuthUserQuery } from "./use-auth-user";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 
-// export function useAuthRedirect({
-//   ifAuthenticated,
-//   ifUnauthenticated,
-// }: {
-//   ifAuthenticated?: string;
-//   ifUnauthenticated?: string;
-// }) {
-//   const router = useRouter();
-//   const { data: user, isLoading } = useAuthUserQuery();
+export function useAuthRedirect({
+  ifAuthenticated,
+  ifUnauthenticated,
+}: {
+  ifAuthenticated?: string;
+  ifUnauthenticated?: string;
+} = {}) {
+  const router = useRouter();
+  const { data: session, isPending } = authClient.useSession();
+  const user = session?.user;
 
-//   useEffect(() => {
-//     if (isLoading) return;
+  useEffect(() => {
+    if (isPending) return;
 
-//     if (user && ifAuthenticated) {
-//       router.replace(ifAuthenticated);
-//     }
+    if (user && ifAuthenticated) {
+      router.replace(ifAuthenticated);
+    }
 
-//     if (!user && ifUnauthenticated) {
-//       router.replace(ifUnauthenticated);
-//     }
-//   }, [user, isLoading, ifAuthenticated, ifUnauthenticated, router]);
+    if (!user && ifUnauthenticated) {
+      router.replace(ifUnauthenticated);
+    }
+  }, [user, isPending, ifAuthenticated, ifUnauthenticated, router]);
 
-//   return { user, isLoading };
-// }
+  return { user, isPending };
+}

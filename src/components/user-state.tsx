@@ -1,18 +1,12 @@
 "use client";
 
-import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-
-const { data: session } = await authClient.getSession();
-const user = session?.user;
+import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 
 export function UserState() {
-  const router = useRouter();
-  useEffect(() => {
-    if (!user) {
-      router.push("/login");
-    }
-  }, [router]);
+  useAuthRedirect({
+    ifAuthenticated: "/dashboard",
+    ifUnauthenticated: "/login",
+  });
+
   return null;
 }

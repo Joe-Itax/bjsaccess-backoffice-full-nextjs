@@ -3,17 +3,36 @@
 import Image from "next/image";
 import Link from "next/link";
 import { LinkIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { LoginForm } from "@/components/login-form";
-// import { DashboardSkeleton } from "../dashboard/skeleton";
-// import { useAuthRedirect } from "@/hooks/use-auth-redirect";
+import { DashboardSkeleton } from "../dashboard/skeleton";
+import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 
 export default function LoginPage() {
-  // const { isLoading } = useAuthRedirect({ ifAuthenticated: "/dashboard" });
+  const { isPending, user } = useAuthRedirect();
+  const [showContent, setShowContent] = useState(false);
 
-  // if (isLoading) {
-  //   return <DashboardSkeleton />;
-  // }
+  useEffect(() => {
+    if (!isPending) {
+      // Ajout d'un délai de 3000ms (3s) après que isPending soit false
+      const timer = setTimeout(() => {
+        setShowContent(true);
+      }, 3000);
+
+      return () => clearTimeout(timer); // Nettoyage du timer
+    }
+  }, [isPending]);
+
+  // Afficher le skeleton tant que isPending est true OU que showContent est false
+  if (isPending || !showContent) {
+    return <DashboardSkeleton />;
+  }
+
+  // Si l'utilisateur est connecté, rediriger vers le dashboard
+  if (user) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
