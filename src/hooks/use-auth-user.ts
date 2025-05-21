@@ -135,26 +135,3 @@
 //     },
 //   });
 // }
-
-// export function useRefreshTokenMutation() {
-//   return useMutation({
-//     mutationFn: async (refreshToken: string) => {
-//       const res = await fetch(
-//         `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/refresh-token`,
-//         {
-//           method: "POST",
-//           headers: {
-//             "Content-Type": "application/json",
-//           },
-//           body: JSON.stringify({ refreshToken }),
-//         }
-//       );
-
-//       if (!res.ok) {
-//         throw new Error("Échec du rafraîchissement du token");
-//       }
-
-//       return (await res.json()) as { accessToken: string };
-//     },
-//   });
-// }

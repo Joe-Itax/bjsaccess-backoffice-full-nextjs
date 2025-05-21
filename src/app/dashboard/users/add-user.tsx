@@ -13,7 +13,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 
-// import { useAddUserMutation } from "@/hooks/use-users";
+import { useAddUserMutation } from "@/hooks/use-users";
+import Spinner from "@/components/spinner";
 
 type UserFormData = {
   name: string;
@@ -34,7 +35,7 @@ export default function AddUser() {
   });
   const [errors, setErrors] = useState<Partial<UserFormData>>({});
 
-  // const { mutateAsync: createUser, isPending } = useAddUserMutation();
+  const { mutateAsync: createUser, isPending } = useAddUserMutation();
 
   const validateForm = (): boolean => {
     const newErrors: Partial<UserFormData> = {};
@@ -75,8 +76,7 @@ export default function AddUser() {
     }
 
     try {
-      alert(`Created user`);
-      // await createUser(newUser);
+      await createUser(newUser);
 
       setFormData({
         name: "",
@@ -210,7 +210,8 @@ export default function AddUser() {
             <Button variant="outline">Annuler</Button>
           </DialogClose>
           <Button onClick={handleSubmit}>
-            {true ? "Création..." : "Créer l'utilisateur"}
+            {isPending ? "Création..." : "Créer l'utilisateur"}
+            {isPending && <Spinner />}
           </Button>
         </div>
       </DialogContent>

@@ -5,12 +5,72 @@ import { prisma } from "@/lib/prisma";
 import { handleUpload, slugify } from "@/lib/middlewares/upload-file";
 import { requireRole } from "@/lib/middlewares/require-role";
 import { removeAccents } from "@/utils/user-utils";
+import { paginationQuery } from "@/utils/pagination";
 
 export const config = {
   api: {
     bodyParser: false,
   },
 };
+
+// -------- GET: Get Users --------
+export async function GET(req: NextRequest) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user)
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get("page") ?? "1");
+    const limit = parseInt(searchParams.get("limit") ?? "10");
+
+    const users = await paginationQuery(prisma.user, page, limit);
+    return NextResponse.json(users);
+  } catch (error) {
+    console.error("Erreur GET /api/users", error);
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Erreur serveur",
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// -------- POST: Admin crée un user --------
+export async function POST(req: Request) {
+  const notAllowed = await requireRole("ADMIN");
+  if (notAllowed) return notAllowed;
+
+  const body = await req.json();
+  const password = body.password
+    ? body.password
+    : process.env.DEFAULT_PASSWORD_USER;
+  try {
+    const newUser = await auth.api.signUpEmail({
+      headers: await headers(),
+      body: {
+        email: body.email,
+        password,
+        name: body.name,
+        role: body.role ?? "AUTHOR",
+      },
+    });
+
+    console.log("Nouvel utilisateur", newUser);
+    return NextResponse.json(newUser);
+  } catch (error) {
+    console.error("Erreur POST /api/user", error);
+    return NextResponse.json(
+      {
+        message: error instanceof Error ? error.message : "Erreur serveur",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+}
 
 // -------- PUT: Update Profile or Admin Update --------
 
@@ -118,27 +178,9 @@ export async function PUT(req: NextRequest) {
   }
 }
 
-// -------- POST: Admin crée un user --------
-export async function POST(req: Request) {
-  const notAllowed = await requireRole(req, "ADMIN");
-  if (notAllowed) return notAllowed;
-
-  const body = await req.json();
-  const newUser = await auth.api.signUpEmail({
-    body: {
-      email: body.email,
-      password: body.password,
-      name: body.name,
-      role: body.role ?? "AUTHOR",
-    },
-  });
-
-  return NextResponse.json(newUser);
-}
-
 // -------- PATCH: Activer / désactiver un user --------
 export async function PATCH(req: Request) {
-  const notAllowed = await requireRole(req, "ADMIN");
+  const notAllowed = await requireRole("ADMIN");
   if (notAllowed) return notAllowed;
 
   const body = await req.json();
@@ -153,7 +195,7 @@ export async function PATCH(req: Request) {
 
 // -------- DELETE: Supprimer un user --------
 export async function DELETE(req: Request) {
-  const notAllowed = await requireRole(req, "ADMIN");
+  const notAllowed = await requireRole("ADMIN");
   if (notAllowed) return notAllowed;
 
   const { searchParams } = new URL(req.url);

@@ -10,7 +10,9 @@ import { DashboardSkeleton } from "../dashboard/skeleton";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 
 export default function LoginPage() {
-  const { isPending, user } = useAuthRedirect();
+  const { isPending, user } = useAuthRedirect({
+    ifAuthenticated: "/dashboard",
+  });
   const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {

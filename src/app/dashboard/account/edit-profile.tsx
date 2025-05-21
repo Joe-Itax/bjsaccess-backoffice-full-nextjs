@@ -27,7 +27,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { authClient } from "@/lib/auth-client";
-import { useNotification } from "@/hooks/use-notification";
+import { useUpdateUserMutation } from "@/hooks/use-users";
+import Spinner from "@/components/spinner";
 
 const initialAvatarImage = [
   {
@@ -42,12 +43,11 @@ const initialAvatarImage = [
 export default function EditProfile() {
   const id = useId();
   const [openDialog, setOpenDialog] = useState(false);
-  const [isPending, setIsPending] = useState(false);
   const [{ files }, { openFileDialog, getInputProps }] = useFileUpload({
     accept: "image/*",
     initialFiles: initialAvatarImage,
   });
-  const { data: session, refetch } = authClient.useSession();
+  const { data: session } = authClient.useSession();
   const user = session?.user;
   const maxLength = 180;
   const { value, characterCount, handleChange } = useCharacterLimit({
@@ -58,10 +58,11 @@ export default function EditProfile() {
   const emailRef = useRef<HTMLInputElement>(null);
   const currentPasswordRef = useRef<HTMLInputElement>(null);
   const newPasswordRef = useRef<HTMLInputElement>(null);
-  const { show } = useNotification();
+
+  const { mutateAsync: updateUser, isPending } = useUpdateUserMutation();
 
   const handleSubmit = async () => {
-    setIsPending(true);
+    // setIsPending(true);
     if (!user) return;
 
     const formData = new FormData();
@@ -85,24 +86,11 @@ export default function EditProfile() {
         formData.append("currentPassword", currentPassword as string);
         formData.append("newPassword", newPassword as string);
       }
-
-      // Must revalidate currentUser after
-      const res = await fetch("/api/user", {
-        method: "PUT",
-        body: formData,
-      });
-
-      const data = await res.json();
-      console.log("data from handleSubmitUpdateProfile - 96 line: ", data);
-      if (!res.ok) throw new Error(data.message || "Une erreur s’est produite");
-
-      refetch();
-      show("success", "Votre profil a été mis à jour avec succès.");
+      await updateUser(formData);
     } catch (error) {
       console.error("Erreur lors de la mise à jour du profil:", error);
     } finally {
       setOpenDialog(false);
-      setIsPending(false);
     }
   };
 
@@ -269,9 +257,7 @@ export default function EditProfile() {
           </DialogClose>
           <Button onClick={handleSubmit} disabled={isPending}>
             {isPending ? "En cours..." : "Enregistrer"}
-            {isPending && (
-              <div className="size-5 animate-spin rounded-full border-4 border-primary border-t-white"></div>
-            )}
+            {isPending && <Spinner />}
           </Button>
         </div>
       </DialogContent>
