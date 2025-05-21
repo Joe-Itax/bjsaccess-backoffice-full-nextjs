@@ -7,7 +7,17 @@ export async function requireRole(requiredRoles: string | string[]) {
     requiredRoles = [requiredRoles];
   }
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || !requiredRoles.includes(session.user.role)) {
+
+  if (!session || !session?.user) {
+    return NextResponse.json(
+      { message: "Veuillez vous authentifié puis réessayer." },
+      {
+        status: 401,
+      }
+    );
+  }
+
+  if (!requiredRoles.includes(session.user.role)) {
     return NextResponse.json(
       { message: "Vous n'êtes pas autorisé à éffectué cette action." },
       {

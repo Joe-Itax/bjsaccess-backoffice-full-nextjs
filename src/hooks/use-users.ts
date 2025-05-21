@@ -32,11 +32,9 @@ export function useUsersQuery() {
         const data = await res.json();
 
         if (!res.ok) {
-          console.error(
-            data.message || "Erreur lors du fetch des utilisateurs: ",
-            data
+          throw new Error(
+            data.message || "Erreur lors du chargement des utilisateurs."
           );
-          throw new Error("Erreur lors du chargement des utilisateurs.");
         }
         return data;
       } catch (error) {
@@ -77,8 +75,11 @@ export function useUserQuery(userId: string) {
     queryFn: async () => {
       try {
         const res = await fetch(`/api/user/${userId}`);
-        if (!res.ok) throw new Error("Erreur lors du fetch de l'utilisateur");
         const data = await res.json();
+        if (!res.ok)
+          throw new Error(
+            data.message || "Erreur lors du fetch de l'utilisateur"
+          );
 
         return data.user;
       } catch (error) {
@@ -174,12 +175,12 @@ export function useDeleteUserMutation() {
         method: "DELETE",
       });
 
+      const data = await res.json();
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Échec de la suppression");
+        throw new Error(data.message || "Échec de la suppression");
       }
 
-      return await res.json();
+      return data;
     },
     onSuccess: (data, userId) => {
       show("success", data.message || "Utilisateur supprimé définitivement");
@@ -213,8 +214,7 @@ export function useSearchUsersMutation() {
       const data = await res.json();
       if (!res.ok)
         throw new Error(
-          `Erreur recherche d'utilisateurs. Erreur: `,
-          data.message
+          data.message || `Erreur recherche d'utilisateurs. Erreur: `
         );
       return data;
     },
@@ -237,8 +237,49 @@ export function useUpdateUserMutation() {
         credentials: "include",
         body: formData,
       });
-      if (!res.ok) throw new Error("Erreur lors de la mise à jour");
-      return res.json();
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(
+          data.message || "Erreur lors de la mise à jourdddddddd"
+        );
+      }
+      return data;
+    },
+
+    onSuccess: (data) => {
+      refetchCurrentUser();
+      show("success", data.message || "Utilisateur mis à jour avec succès");
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["auth-user"] });
+    },
+    onError: (error) => {
+      show(
+        "error",
+        error.message || "Erreur lors de la mise à jour de l'utilisateur"
+      );
+    },
+  });
+}
+
+export function useAdminUpdateUserMutation() {
+  const { show } = useNotification();
+  const { refetch: refetchCurrentUser } = authClient.useSession();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (datas: { id: string; formData: FormData }) => {
+      const { id, formData } = datas;
+      const res = await fetch(`/api/user/${id}`, {
+        method: "PUT",
+        credentials: "include",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok)
+        throw new Error(data.message || "Erreur lors de la mise à jour");
+      return data;
     },
 
     onSuccess: (data) => {

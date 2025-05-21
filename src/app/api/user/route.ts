@@ -76,6 +76,7 @@ export async function POST(req: Request) {
 
 export async function PUT(req: NextRequest) {
   const contentType = req.headers.get("content-type");
+  const formData = await req.formData();
 
   const session = await auth.api.getSession({ headers: await headers() });
   const currentUser = session?.user;
@@ -85,7 +86,6 @@ export async function PUT(req: NextRequest) {
 
   try {
     if (contentType?.includes("multipart/form-data")) {
-      const formData = await req.formData();
       const name = formData.get("name") as string;
       const newEmail = formData.get("email") as string;
       const file = formData.get("avatar") as Blob | null;
@@ -134,41 +134,39 @@ export async function PUT(req: NextRequest) {
         });
       }
 
+      // Reactivate User By Admin
+      const userId = formData.get("userId") as string;
+      if (userId) {
+        const notAllowed = await requireRole("ADMIN");
+        try {
+          if (notAllowed) return notAllowed;
+          console.log("user allowed");
+          await prisma.user.update({
+            where: { id: userId },
+            data: { isActive: true },
+          });
+          return NextResponse.json({
+            message: "Utilisateur réactiver avec succès.",
+          });
+        } catch (error) {
+          return NextResponse.json(
+            {
+              error: error instanceof Error ? error.message : "Erreur serveur",
+            },
+            { status: 500 }
+          );
+        }
+      }
+
       return NextResponse.json({
         message: "Votre profil a été mis à jour avec succès.",
       });
     }
 
-    // ADMIN update: role & isActive
-    if (contentType?.includes("application/json")) {
-      const body = await req.json();
-      const { userId, role, isActive } = body;
-
-      // Vérifie si l'utilisateur est un ADMIN
-      if (currentUser.role !== "ADMIN") {
-        return NextResponse.json({ error: "Accès interdit" }, { status: 403 });
-      }
-
-      if (!userId) {
-        return NextResponse.json({ error: "userId requis" }, { status: 400 });
-      }
-
-      // Update ciblé (role / isActive)
-      await auth.api.updateUser({
-        body: {
-          id: userId,
-          ...(role && { role }),
-          ...(typeof isActive === "boolean" && { isActive }),
-        },
-        headers: await headers(),
-      });
-
-      return NextResponse.json({ message: "Utilisateur mis à jour" });
-    }
-
     return NextResponse.json({ error: "Requête invalide" }, { status: 400 });
   } catch (error) {
     console.log("Erreur PUT /api/user", error);
+    console.error("Erreur PUT /api/user", error);
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Erreur serveur",
@@ -176,33 +174,4 @@ export async function PUT(req: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// -------- PATCH: Activer / désactiver un user --------
-export async function PATCH(req: Request) {
-  const notAllowed = await requireRole("ADMIN");
-  if (notAllowed) return notAllowed;
-
-  const body = await req.json();
-
-  const updated = await prisma.user.update({
-    where: { id: body.id },
-    data: { isActive: body.isActive },
-  });
-
-  return NextResponse.json(updated);
-}
-
-// -------- DELETE: Supprimer un user --------
-export async function DELETE(req: Request) {
-  const notAllowed = await requireRole("ADMIN");
-  if (notAllowed) return notAllowed;
-
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
-
-  if (!id) return NextResponse.json({ error: "ID manquant" }, { status: 400 });
-
-  await prisma.user.delete({ where: { id } });
-  return NextResponse.json({ message: "Utilisateur supprimé" });
 }

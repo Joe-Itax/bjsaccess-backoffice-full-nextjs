@@ -1,3 +1,4 @@
+import Spinner from "@/components/spinner";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -24,11 +25,11 @@ export default function ReactiveUser({ row }: ReactiveUserProps) {
 
   const handleReactivateUser = async () => {
     const user = row.original;
+    const formData = new FormData();
+    formData.append("userId", user.id);
+
     try {
-      await reactivateUserMutation.mutateAsync({
-        id: user.id,
-        isActive: true,
-      });
+      await reactivateUserMutation.mutateAsync(formData);
     } catch (error) {
       console.error("Erreur lors de la réactivation de l'utilisateur:", error);
     } finally {
@@ -64,6 +65,7 @@ export default function ReactiveUser({ row }: ReactiveUserProps) {
             disabled={reactivateUserMutation.isPending}
           >
             {reactivateUserMutation.isPending ? "Réactivation..." : "Réactiver"}
+            {reactivateUserMutation.isPending && <Spinner />}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

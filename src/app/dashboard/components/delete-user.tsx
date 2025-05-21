@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { useDeleteUserMutation } from "@/hooks/use-users";
 import { User } from "@/types/user";
 import { TrashIcon } from "lucide-react";
+import Spinner from "@/components/spinner";
 
 interface DeleteUserProps {
   user: User;
@@ -86,6 +87,7 @@ export default function DeleteUser({ user }: DeleteUserProps) {
             variant="destructive"
           >
             {deleteUserMutation.isPending ? "Suppression..." : "Supprimer"}
+            {deleteUserMutation.isPending && <Spinner />}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

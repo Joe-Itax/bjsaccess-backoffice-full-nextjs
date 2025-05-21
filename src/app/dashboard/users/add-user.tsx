@@ -209,7 +209,7 @@ export default function AddUser() {
           <DialogClose asChild>
             <Button variant="outline">Annuler</Button>
           </DialogClose>
-          <Button onClick={handleSubmit}>
+          <Button onClick={handleSubmit} disabled={isPending}>
             {isPending ? "Création..." : "Créer l'utilisateur"}
             {isPending && <Spinner />}
           </Button>

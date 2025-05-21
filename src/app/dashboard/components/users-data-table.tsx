@@ -91,27 +91,64 @@ import {
 import AddUser from "../users/add-user";
 import DeactiveUser from "./deactive-user";
 import ReactiveUser from "./reactive-user";
+import Spinner from "@/components/spinner";
 
 const columns: ColumnDef<User>[] = [
   {
     id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
+    header: ({ table }) => {
+      // Déterminer le nombre de lignes actives sélectionnables
+      const activeRows = table
+        .getRowModel()
+        .rows.filter((row) => row.original.isActive);
+      const allActiveRowsSelected =
+        activeRows.length > 0 && activeRows.every((row) => row.getIsSelected());
+      const someActiveRowsSelected = activeRows.some((row) =>
+        row.getIsSelected()
+      );
+
+      // Déterminer l'état de la checkbox du header
+      let headerCheckedState: boolean | "indeterminate";
+      if (allActiveRowsSelected) {
+        headerCheckedState = true;
+      } else if (someActiveRowsSelected) {
+        headerCheckedState = "indeterminate";
+      } else {
+        headerCheckedState = false;
+      }
+
+      return (
+        <Checkbox
+          checked={headerCheckedState} // Utilisation de la variable d'état
+          onCheckedChange={(value) => {
+            if (value === true) {
+              // Si l'utilisateur coche la case "Select All"
+              // Nous sélectionnons uniquement les lignes actives
+              activeRows.forEach((row) => {
+                row.toggleSelected(true);
+              });
+            } else if (value === false) {
+              // Si l'utilisateur décoche la case "Select All"
+              // Nous désélectionnons TOUTES les lignes (y compris celles qui étaient actives)
+              table.toggleAllPageRowsSelected(false);
+            } else if (value === "indeterminate") {
+              activeRows.forEach((row) => {
+                row.toggleSelected(true);
+              });
+            }
+          }}
+          aria-label="Select all"
+        />
+      );
+    },
+    cell: ({ row }) =>
+      row.original.isActive ? (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ) : null,
     size: 28,
     enableSorting: false,
     enableHiding: false,
@@ -213,7 +250,6 @@ export default function UsersDataTable() {
     setPage,
     setPageSize,
   } = useUsersQuery();
-  console.log("usersData at line 216: ", usersData);
 
   const totalItems =
     (searchUsersMutation.data?.totalItems ?? usersData?.totalItems) || 0;
@@ -233,10 +269,10 @@ export default function UsersDataTable() {
 
     try {
       await deactivateUserMutation.mutateAsync(selectedIds);
-      table.resetRowSelection(); // Désélectionner les lignes après suppression
+      table.resetRowSelection(); // Désélectionner les lignes après désactivation
     } catch (error) {
       console.error(
-        "Erreur lors de la désactivation multiple de users.",
+        "Erreur lors de la désactivation multiple des users.",
         error
       );
     }
@@ -417,14 +453,14 @@ export default function UsersDataTable() {
                   </div>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      Etes-vous sûr de vouloir supprimer?
+                      Etes-vous sûr de vouloir désactiver?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Cette action ne peut pas être annulée. Cela supprimera
-                      définitivement {table.getSelectedRowModel().rows.length}{" "}
+                      Cette action menera à la désactivation temporaire de{" "}
+                      {table.getSelectedRowModel().rows.length}{" "}
                       {table.getSelectedRowModel().rows.length === 1
-                        ? "élève"
-                        : "élèves"}{" "}
+                        ? "utilisateur"
+                        : "utilisateurs"}{" "}
                       {table.getSelectedRowModel().rows.length === 1
                         ? "sélectionné"
                         : "sélectionnés"}
@@ -434,8 +470,14 @@ export default function UsersDataTable() {
                 </div>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Annuler</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteRows}>
-                    Supprimer
+                  <AlertDialogAction
+                    onClick={handleDeleteRows}
+                    disabled={deactivateUserMutation.isPending}
+                  >
+                    {!deactivateUserMutation.isPending
+                      ? "Désactiver"
+                      : "En cours"}
+                    {deactivateUserMutation.isPending && <Spinner />}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
