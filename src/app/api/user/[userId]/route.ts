@@ -2,9 +2,16 @@ import { Role } from "@/generated/prisma";
 import { auth } from "@/lib/auth";
 import { requireRole } from "@/lib/middlewares/require-role";
 import { prisma } from "@/lib/prisma";
+import { removeAccents } from "@/utils/user-utils";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+const protectedAccounts = process.env.PROTECTED_ACCOUNTS?.split(",") || [];
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 // -------- GET: Récupérer un user --------
 export async function GET(
   req: NextRequest,
@@ -89,9 +96,7 @@ export async function GET(
     },
   }));
 
-  // user.postsCount = user._count.posts;
   const postsCount = user._count.posts;
-  // delete user._count;
   const { _count, ...finalUser } = user;
   console.log("_count: ", _count);
 
@@ -153,10 +158,87 @@ export async function DELETE(
   const notAllowed = await requireRole("ADMIN");
   if (notAllowed) return notAllowed;
 
+  const { userId } = await params;
+
   try {
-    await prisma.user.delete({ where: { id: params.userId } });
-    return NextResponse.json({ message: "Utilisateur supprimé" });
+    // await prisma.user.delete({ where: { id: params.userId } });
+    // return NextResponse.json({ message: "Utilisateur supprimé" });
+    await prisma.$transaction(async (tx) => {
+      // 1. Vérifier que l'utilisateur existe
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          role: true,
+          name: true,
+          email: true,
+          posts: { select: { id: true } },
+        },
+      });
+
+      if (!user) {
+        throw new Error("Utilisateur non trouvé");
+      }
+
+      if (
+        protectedAccounts.some(
+          (entry: unknown) =>
+            //   user.email.includes(entry)
+            typeof entry === "string" && user.email.includes(entry as string)
+        ) ||
+        protectedAccounts.some((protectedName) =>
+          removeAccents(user.name ?? "").includes(protectedName.toLowerCase())
+        )
+      ) {
+        throw new Error("Utilisateur protégé!!! Impossible de le supprimer");
+      }
+
+      // 2. Supprimer les commentaires de l'utilisateur (s'ils existent)
+      await tx.comment.deleteMany({
+        where: { visitorEmail: user.email },
+      });
+
+      // 3. Pour chaque post de l'utilisateur :
+      for (const post of user.posts) {
+        // a. Supprimer les relations tags
+        await tx.tagsOnPosts.deleteMany({
+          where: { postId: post.id },
+        });
+
+        // b. Supprimer les commentaires du post
+        await tx.comment.deleteMany({
+          where: { postId: post.id },
+        });
+      }
+
+      // 4. Supprimer tous les posts de l'utilisateur
+      await tx.post.deleteMany({
+        where: { authorId: userId },
+      });
+
+      // 5. Finalement supprimer l'utilisateur
+      await tx.user.delete({
+        where: { id: userId },
+      });
+    });
+
+    return NextResponse.json({
+      message:
+        "L'Utilisateur et toutes ses données associées ont été supprimés définitivement",
+    });
   } catch (error) {
+    // Gestion des erreurs spécifiques
+    if (error instanceof Error && error.message === "Utilisateur non trouvé") {
+      return NextResponse.json(
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : "Erreur lors de la suppression de l'utilisateur",
+        },
+        { status: 404 }
+      );
+    }
     return NextResponse.json(
       {
         error:

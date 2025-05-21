@@ -7,6 +7,12 @@ import { removeAccents } from "@/utils/user-utils";
 import { NextRequest, NextResponse } from "next/server";
 const protectedAccounts = process.env.PROTECTED_ACCOUNTS?.split(",") || [];
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export async function DELETE(req: NextRequest) {
   const notAllowed = await requireRole("ADMIN");
   if (notAllowed) return notAllowed;
