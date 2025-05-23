@@ -3,6 +3,12 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export async function DELETE(
   req: NextRequest,
   { params }: { params: { tagId: string } }

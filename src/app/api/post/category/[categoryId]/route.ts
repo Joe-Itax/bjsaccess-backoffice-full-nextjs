@@ -3,6 +3,12 @@ import { headers } from "next/headers";
 import { prisma, Prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 async function ensureDefaultCategoryExists(tx: Prisma.TransactionClient) {
   const defaultCategoryName = "uncategorized";
   let defaultCategory = await tx.category.findUnique({

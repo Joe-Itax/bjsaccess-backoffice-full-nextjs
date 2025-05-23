@@ -5,6 +5,12 @@ import { auth } from "@/lib/auth";
 import { paginationQuery } from "@/utils/pagination";
 import { generateUniqueSlug } from "@/utils/generate-unique-slug";
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export async function GET(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user)
