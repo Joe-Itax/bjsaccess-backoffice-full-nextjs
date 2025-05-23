@@ -25,7 +25,7 @@ interface PaginationResult<T> {
   details?: string;
 }
 
-interface PrismaDelegate<ModelType> {
+export interface PrismaDelegate<ModelType> {
   count(args?: { where?: object | Prisma.InputJsonValue }): Promise<number>;
   findMany(args: Prisma.Args<unknown, "findMany">): Promise<ModelType[]>;
 }
@@ -116,5 +116,3 @@ export async function paginationQuery<T>(
     };
   }
 }
-
-// --------------------------------------

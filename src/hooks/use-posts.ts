@@ -335,19 +335,16 @@ export function useCategoriesQuery() {
     queryKey: ["categories"],
     queryFn: async () => {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/posts/categories/all`,
-          {
-            credentials: "include",
-          }
-        );
+        const res = await fetch(`/api/post/category`, {
+          credentials: "include",
+        });
         if (!res.ok) {
           show("error", "Erreur lors du chargement des categories.");
           throw new Error("Erreur récupération des categories");
         }
         const data = await res.json();
-        console.log("categories data: ", data);
-        return data.categories;
+        // console.log("categories data: ", data);
+        return data.data;
       } catch (error) {
         console.error("Erreur lors du chargement des categories: ", error);
         throw error;
@@ -355,23 +352,21 @@ export function useCategoriesQuery() {
     },
   });
 }
+
 export function useCreateCategoryMutation() {
   const { show } = useNotification();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (category: Partial<Category>) => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/posts/admin/categories`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(category),
-        }
-      );
+      const res = await fetch(`/api/post/category`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(category),
+      });
       const data = await res.json();
       if (!res.ok) {
         throw new Error(
@@ -399,12 +394,9 @@ export function useDeleteCategoryMutation() {
 
   return useMutation({
     mutationFn: async ({ categoryId }: { categoryId: string }) => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/posts/admin/categories/${categoryId}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const res = await fetch(`/api/post/category/${categoryId}`, {
+        method: "DELETE",
+      });
 
       if (!res.ok) {
         const error = await res.json();
@@ -432,18 +424,15 @@ export function useTagsQuery() {
     queryKey: ["tags"],
     queryFn: async () => {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/posts/tags/all`,
-          {
-            credentials: "include",
-          }
-        );
+        const res = await fetch(`/api/admin/tag`, {
+          credentials: "include",
+        });
         if (!res.ok) {
           show("error", "Erreur lors du chargement des tags.");
           throw new Error("Erreur récupération des tags");
         }
         const data = await res.json();
-        return data.tags;
+        return data.data;
       } catch (error) {
         console.error("Erreur lors du chargement des tags: ", error);
         throw error;
@@ -457,17 +446,14 @@ export function useCreateTagMutation() {
 
   return useMutation({
     mutationFn: async (tag: Partial<Tag>) => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/posts/admin/tags`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(tag),
-        }
-      );
+      const res = await fetch(`/api/admin/tag`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(tag),
+      });
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.message || "Erreur lors de la création du Tag");
@@ -490,12 +476,9 @@ export function useDeleteTagMutation() {
 
   return useMutation({
     mutationFn: async ({ tagId }: { tagId: string }) => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/posts/admin/tags/${tagId}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const res = await fetch(`/api/admin/tag/${tagId}`, {
+        method: "DELETE",
+      });
 
       if (!res.ok) {
         const error = await res.json();

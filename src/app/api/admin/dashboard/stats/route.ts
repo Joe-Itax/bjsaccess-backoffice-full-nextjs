@@ -1,7 +1,11 @@
-
-
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(req: NextRequest) {
@@ -13,8 +17,6 @@ export async function GET(req: NextRequest) {
     const threeMonthsAgo = new Date(new Date().setMonth(now.getMonth() - 3));
 
     // Helper function to format dates for grouping.
-    // In Next.js App Router, you can define this directly within the route handler
-    // or import it from a utility file if reused.
     const formatDateForComparison = (date: Date): string => {
       const d = new Date(date);
       return new Date(d.getFullYear(), d.getMonth(), d.getDate())
@@ -152,7 +154,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Format popular posts
-    type PopularPostPayload = (typeof popularPosts)[number]; 
+    type PopularPostPayload = (typeof popularPosts)[number];
 
     const formattedPopularPosts = popularPosts.map(
       (post: PopularPostPayload) => ({
@@ -202,4 +204,3 @@ export async function GET(req: NextRequest) {
     );
   }
 }
-

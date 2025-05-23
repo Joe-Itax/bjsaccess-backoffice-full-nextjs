@@ -27,9 +27,10 @@ export interface Comment {
   updatedAt: string;
 }
 
-export interface Category{
+export interface Category {
   id: string;
   name: string;
+  description: string;
   slug: string;
 }
 

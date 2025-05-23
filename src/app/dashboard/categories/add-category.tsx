@@ -13,20 +13,24 @@ import {
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 
-// import { useCreateCategoryMutation } from "@/hooks/use-posts";
+import { useCreateCategoryMutation } from "@/hooks/use-posts";
+import Spinner from "@/components/spinner";
 
 type CategoryFormData = {
   name: string;
+  description?: string;
 };
 
 export default function AddCategory() {
   const [openDialog, setOpenDialog] = useState(false);
   const [formData, setFormData] = useState<CategoryFormData>({
     name: "",
+    description: "",
   });
   const [errors, setErrors] = useState<Partial<CategoryFormData>>({});
 
-  // const { mutateAsync: createCategory, isPending } = useCreateCategoryMutation();
+  const { mutateAsync: createCategory, isPending } =
+    useCreateCategoryMutation();
 
   const validateForm = (): boolean => {
     const newErrors: Partial<CategoryFormData> = {};
@@ -40,15 +44,17 @@ export default function AddCategory() {
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
-    // const newTag = {
-    //   name: formData.name,
-    // };
+    const newTag: CategoryFormData = {
+      name: formData.name,
+    };
+
+    if (formData.description) newTag.description = formData.description;
 
     try {
-      // await createCategory(newTag);
-      alert("Submitting");
+      await createCategory(newTag);
       setFormData({
         name: "",
+        description: "",
       });
     } catch (error) {
       console.error(error);
@@ -104,13 +110,30 @@ export default function AddCategory() {
               <p className="text-red-500 text-sm">{errors.name}</p>
             )}
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="name">Description</Label>
+            <input
+              id="description"
+              name="description"
+              type="text"
+              value={formData.description}
+              onChange={handleChange}
+              className={`w-full p-2 border rounded ${
+                errors.name ? "border-red-500" : "border-gray-300"
+              }`}
+            />
+            {errors.name && (
+              <p className="text-red-500 text-sm">{errors.name}</p>
+            )}
+          </div>
         </div>
         <div className="border-t px-6 py-4 flex justify-end gap-2">
           <DialogClose asChild>
             <Button variant="outline">Annuler</Button>
           </DialogClose>
-          <Button onClick={handleSubmit}>
-            {true ? "En cours..." : "Ajouter"}
+          <Button onClick={handleSubmit} disabled={isPending}>
+            {isPending ? "En cours..." : "Ajouter"}
+            {isPending && <Spinner />}
           </Button>
         </div>
       </DialogContent>
