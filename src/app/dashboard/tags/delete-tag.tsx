@@ -14,7 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Trash2Icon } from "lucide-react";
 import { Tag } from "@/types/posts";
-// import {  useDeleteTagMutation } from "@/hooks/use-posts";
+import { useDeleteTagMutation } from "@/hooks/use-posts";
+import Spinner from "@/components/spinner";
 
 interface DeleteTagProps {
   tag: Tag;
@@ -23,13 +24,12 @@ interface DeleteTagProps {
 export default function DeleteTag({ tag }: DeleteTagProps) {
   const [openDialog, setOpenDialog] = useState(false);
 
-  // const deleteTagMutation = useDeleteTagMutation();
+  const deleteTagMutation = useDeleteTagMutation();
 
   const handleDeletePost = async () => {
     try {
       if (tag?.id) {
-        alert("Deleted");
-        // await deleteTagMutation.mutateAsync({ tagId: tag.id });
+        await deleteTagMutation.mutateAsync({ tagId: tag.id });
       }
     } catch (error) {
       console.error(error);
@@ -55,8 +55,13 @@ export default function DeleteTag({ tag }: DeleteTagProps) {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Annuler</AlertDialogCancel>
-          <Button onClick={handleDeletePost} variant="destructive">
-            {true ? "Suppression..." : "Supprimer"}
+          <Button
+            onClick={handleDeletePost}
+            variant="destructive"
+            disabled={deleteTagMutation.isPending}
+          >
+            {deleteTagMutation.isPending ? "Suppression..." : "Supprimer"}
+            {deleteTagMutation.isPending && <Spinner />}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

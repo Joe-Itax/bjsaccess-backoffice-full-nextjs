@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { prisma, Prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 
 async function ensureDefaultCategoryExists(tx: Prisma.TransactionClient) {
   const defaultCategoryName = "uncategorized";
@@ -28,7 +28,7 @@ export async function DELETE(
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user)
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
   const { categoryId } = params;
 
   try {

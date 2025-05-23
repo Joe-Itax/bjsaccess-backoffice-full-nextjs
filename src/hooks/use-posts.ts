@@ -424,7 +424,7 @@ export function useTagsQuery() {
     queryKey: ["tags"],
     queryFn: async () => {
       try {
-        const res = await fetch(`/api/admin/tag`, {
+        const res = await fetch(`/api/post/tag`, {
           credentials: "include",
         });
         if (!res.ok) {
@@ -446,7 +446,7 @@ export function useCreateTagMutation() {
 
   return useMutation({
     mutationFn: async (tag: Partial<Tag>) => {
-      const res = await fetch(`/api/admin/tag`, {
+      const res = await fetch(`/api/post/tag`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -476,7 +476,7 @@ export function useDeleteTagMutation() {
 
   return useMutation({
     mutationFn: async ({ tagId }: { tagId: string }) => {
-      const res = await fetch(`/api/admin/tag/${tagId}`, {
+      const res = await fetch(`/api/post/tag/${tagId}`, {
         method: "DELETE",
       });
 
