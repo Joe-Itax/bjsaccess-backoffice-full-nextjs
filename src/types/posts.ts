@@ -35,6 +35,7 @@ export interface Category {
 }
 
 export interface Tag {
+  tag: any;
   id: string;
   name: string;
   slug: string;

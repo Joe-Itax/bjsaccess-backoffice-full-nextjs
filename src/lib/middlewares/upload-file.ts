@@ -2,7 +2,7 @@ import mime from "mime";
 import path from "path";
 import { stat, mkdir, writeFile, unlink, readdir } from "fs/promises";
 
-type Folder = "avatars" | "featured-image";
+type Folder = "avatars" | "featured-images";
 
 // Fonction principale appelée dans les routes API
 export async function handleUpload({
@@ -43,17 +43,6 @@ export async function handleUpload({
   await writeFile(filePath, buffer);
 
   return `${relativePath}/${filename}`;
-}
-
-export function slugify(str: string): string {
-  return str
-    .normalize("NFD") // décomposer les caractères accentués
-    .replace(/[\u0300-\u036f]/g, "") // supprimer les diacritiques (accents)
-    .toLowerCase()
-    .replace(/\s+/g, "-") // espaces → tirets
-    .replace(/[^a-z0-9\-]/g, "") // supprimer tout le reste sauf lettres, chiffres, tirets
-    .replace(/-+/g, "-") // évite les tirets multiples
-    .replace(/^-+|-+$/g, ""); // supprime les tirets en début/fin
 }
 
 export async function removeOldFiles({

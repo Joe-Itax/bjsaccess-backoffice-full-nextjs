@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { handleUpload, slugify } from "@/lib/middlewares/upload-file";
+import { handleUpload } from "@/lib/middlewares/upload-file";
 import { requireRole } from "@/lib/middlewares/require-role";
 import { removeAccents } from "@/utils/user-utils";
 import { paginationQuery } from "@/utils/pagination";
+import { slugify } from "@/utils/generate-unique-slug";
 
 export const config = {
   api: {

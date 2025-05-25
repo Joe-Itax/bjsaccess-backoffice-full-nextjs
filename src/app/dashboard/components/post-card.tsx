@@ -5,7 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { Post } from "@/types/posts";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, CheckCircleIcon, CircleOffIcon, MoveRight, UserIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  CheckCircleIcon,
+  CircleOffIcon,
+  MoveRight,
+  UserIcon,
+} from "lucide-react";
 
 interface PostCardProps {
   post: Post;
@@ -20,6 +26,8 @@ export default function PostCard({ post }: PostCardProps) {
       year: "numeric",
     });
   };
+
+  // console.log("poost at line - 30: ", post);
 
   const [hoverBox, setHoverBox] = useState(false);
 
@@ -76,27 +84,27 @@ export default function PostCard({ post }: PostCardProps) {
 
         <p className="text-gray-600 mb-4 line-clamp-2">{post.content}</p>
 
-        {post.tags && post.tags.length > 0 && (
+        {post?.tags && post?.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
-            {post.tags.map((tag) => (
+            {post?.tags.map((tagsOnPost) => (
               <span
-                key={tag.id}
-                className="inline-block bg-blue-100 rounded-full px-3 py-1 text-xs font-semibold text-blue-800"
+                key={tagsOnPost.tag.id}
+                className={`inline-block bg-blue-100 rounded-full px-3 py-1 text-xs font-semibold text-blue-800`}
               >
-                #{tag.name}
+                #{tagsOnPost.tag.name}
               </span>
             ))}
           </div>
         )}
 
-<Link href={`/dashboard/posts/${post.id}`}>
-        <Button
-          variant="link"
-          className="inline-flex items-center justify-center text-blue-500 hover:text-blue-700 font-medium uppercase"
-        >
-          Lire plus
-          <MoveRight className={`${hoverBox ? "animate-bounce" : ""}`} />
-        </Button>
+        <Link href={`/dashboard/posts/${post.id}`}>
+          <Button
+            variant="link"
+            className="inline-flex items-center justify-center text-blue-500 hover:text-blue-700 font-medium uppercase"
+          >
+            Lire plus
+            <MoveRight className={`${hoverBox ? "animate-bounce" : ""}`} />
+          </Button>
         </Link>
       </div>
     </div>

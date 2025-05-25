@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import { useCreatePostMutation } from "@/hooks/use-posts";
 import { Category, Tag } from "@/types/posts";
+import Spinner from "@/components/spinner";
 
 type PostFormData = {
   title: string;
@@ -231,6 +232,7 @@ export default function CreatePost({
           </DialogClose>
           <Button onClick={handleSubmit} disabled={isPending}>
             {isPending ? "Création..." : "Créer le post"}
+            {isPending && <Spinner />}
           </Button>
         </div>
       </DialogContent>

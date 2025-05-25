@@ -13,12 +13,9 @@ export function usePostsQuery() {
     queryKey: ["posts"],
     queryFn: async () => {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/posts`,
-          {
-            credentials: "include",
-          }
-        );
+        const res = await fetch(`/api/post`, {
+          credentials: "include",
+        });
         if (!res.ok) {
           show("error", "Erreur lors du chargement des articles.");
           throw new Error("Erreur récupération des articles");
@@ -37,12 +34,9 @@ export function useSearchPostsMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (query: string) => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/posts/search?q=${query}`,
-        {
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`/api/post/search?q=${query}`, {
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Erreur recherche des articles");
       const data = await res.json();
       return data.data;
@@ -57,12 +51,9 @@ export function usePostByIdQuery(id: string) {
   return useQuery({
     queryKey: ["post", id],
     queryFn: async () => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/posts/${id}`,
-        {
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`/api/post/${id}`, {
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Erreur récupération de l'article");
       const data = await res.json();
       return data;
@@ -74,12 +65,9 @@ export function usePostByCategoryQuery(slug: string) {
   return useQuery({
     queryKey: ["posts", slug],
     queryFn: async () => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/posts/category/${slug}`,
-        {
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`/api/post/category/${slug}`, {
+        credentials: "include",
+      });
       if (!res.ok)
         throw new Error("Erreur récupération des articles de cette catégorie");
       const data = await res.json();
@@ -92,12 +80,9 @@ export function usePostByTagsQuery(slug: string) {
   return useQuery({
     queryKey: ["posts", slug],
     queryFn: async () => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/posts/tag/${slug}`,
-        {
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`/api/post/tag/${slug}`, {
+        credentials: "include",
+      });
       if (!res.ok)
         throw new Error("Erreur récupération des articles de ces tags");
       const data = await res.json();
@@ -112,14 +97,11 @@ export function useCreatePostMutation() {
 
   return useMutation({
     mutationFn: async (post: FormData) => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/posts/admin`,
-        {
-          method: "POST",
-          credentials: "include",
-          body: post,
-        }
-      );
+      const res = await fetch(`/api/post`, {
+        method: "POST",
+        credentials: "include",
+        body: post,
+      });
       const data = await res.json();
       if (!res.ok) {
         throw new Error(
@@ -144,14 +126,11 @@ export function useUpdatePostMutation() {
 
   return useMutation({
     mutationFn: async ({ id, form }: { id: string; form: FormData }) => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/posts/admin/${id}`,
-        {
-          method: "PUT",
-          credentials: "include",
-          body: form,
-        }
-      );
+      const res = await fetch(`/api/post/${id}`, {
+        method: "PUT",
+        credentials: "include",
+        body: form,
+      });
 
       if (!res.ok) throw new Error("Erreur lors de la mise à jour");
       return res.json();
@@ -178,17 +157,14 @@ export function usePublishPostMutation() {
   return useMutation({
     mutationFn: async (post: Partial<Post>) => {
       const { id, published } = post;
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/posts/admin/${id}`,
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ published }),
-        }
-      );
+      const res = await fetch(`/api/post/${id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ published }),
+      });
       if (!res.ok) throw new Error("Erreur lors de la mise à jour");
       return res.json();
     },
@@ -218,12 +194,9 @@ export function useDeletePostMutation() {
 
   return useMutation({
     mutationFn: async (postId: string) => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/posts/admin/${postId}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const res = await fetch(`/api/post/${postId}`, {
+        method: "DELETE",
+      });
 
       if (!res.ok) {
         const error = await res.json();
