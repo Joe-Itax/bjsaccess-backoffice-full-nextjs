@@ -20,8 +20,6 @@ export async function GET(
 
   const { postId } = await params;
 
-  // TODO: Implement user authentication to determine `isBackOffice`
-  // For now, let's assume it's public unless a specific admin token is present
   const isBackOffice = session?.user ? true : false;
 
   try {
@@ -78,13 +76,13 @@ export async function GET(
     });
 
     if (!post) {
-      return NextResponse.json({ message: "Post not found." }, { status: 404 });
+      return NextResponse.json({ message: "Article introuvable." }, { status: 404 });
     }
 
     // Check permissions if not published and not back-office
     if (!post.published && !isBackOffice) {
       return NextResponse.json(
-        { message: "Unauthorized access - Post not published." },
+        { message: "Acces non autorisé - Article non publié." },
         { status: 403 }
       );
     }
@@ -101,7 +99,7 @@ export async function GET(
     const errorMessage =
       error instanceof Error ? error.message : "An unknown error occurred.";
     return NextResponse.json(
-      { message: "Error fetching post", error: errorMessage },
+      { message: "Erreur lors de la récupération de l'article.", error: errorMessage },
       { status: 500 }
     );
   }

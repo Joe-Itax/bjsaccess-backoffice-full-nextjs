@@ -35,9 +35,12 @@ export interface Category {
 }
 
 export interface Tag {
-  tag: any;
+  tag: {
+    id: string;
+    name: string;
+    slug: string;
+  };
   id: string;
   name: string;
   slug: string;
 }
-

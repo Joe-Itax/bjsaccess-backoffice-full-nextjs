@@ -155,8 +155,7 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: { userId: string } }
 ) {
-  const notAllowed = await requireRole("ADMIN");
-  if (notAllowed) return notAllowed;
+ 
 
   const { userId } = await params;
 
