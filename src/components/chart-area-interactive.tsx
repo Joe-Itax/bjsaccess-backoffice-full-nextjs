@@ -99,24 +99,24 @@ export function ChartAreaInteractive({ data }: DashboardChartProps) {
               <linearGradient id="fillPosts" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="var(--color-posts)"
+                  stopColor="var(--chart-2)"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="var(--color-posts)"
+                  stopColor="var(--chart-2)"
                   stopOpacity={0.1}
                 />
               </linearGradient>
               <linearGradient id="fillComments" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="var(--color-comments)"
+                  stopColor="var(--chart-1)"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="var(--color-comments)"
+                  stopColor="var(--chart-1)"
                   stopOpacity={0.1}
                 />
               </linearGradient>
@@ -161,15 +161,15 @@ export function ChartAreaInteractive({ data }: DashboardChartProps) {
               dataKey="posts"
               type="natural"
               fill="url(#fillPosts)"
-              stroke="var(--color-posts)"
-              stackId="a"
+              stroke="var(--chart-2)"
+              // stackId="a"
             />
             <Area
               dataKey="comments"
               type="natural"
               fill="url(#fillComments)"
-              stroke="var(--color-comments)"
-              stackId="a"
+              stroke="var(--chart-1)"
+              // stackId="a"
             />
             <ChartLegend content={<ChartLegendContent />} />
           </AreaChart>

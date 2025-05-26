@@ -73,7 +73,6 @@ export async function GET(req: NextRequest) {
         by: ["createdAt"],
         where: {
           createdAt: { gte: threeMonthsAgo },
-          published: true,
         },
         _count: { id: true },
         orderBy: { createdAt: "asc" },

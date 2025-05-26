@@ -47,7 +47,7 @@ export function SectionCards({ stats }: { stats: DashboardStats }) {
       {/* Carte 2 - Nombre total des élèves enregistré à la cantine servis */}
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Posts de ce mois</CardDescription>
+          <CardDescription>Posts publié de ce mois</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
             <NumberTicker value={stats.newPostsThisMonth} />
           </CardTitle>
@@ -71,7 +71,7 @@ export function SectionCards({ stats }: { stats: DashboardStats }) {
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Effectif global des élèves inscrits
+            Effectif global des articles publiés
           </div>
           <div className="text-muted-foreground">Mis à jour en temps réel</div>
         </CardFooter>
@@ -97,7 +97,7 @@ export function SectionCards({ stats }: { stats: DashboardStats }) {
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Progression {stats.approvalRate >= 0 ? "positive" : "négative"}
+            Total de commentaire approuvé figurant sur tous les articles.
           </div>
           <div className="text-muted-foreground">
             Par rapport au mois précédent
@@ -105,7 +105,7 @@ export function SectionCards({ stats }: { stats: DashboardStats }) {
         </CardFooter>
       </Card>
 
-      {/* Carte 4 - Taux d’abonnés actifs */}
+      {/* Carte 4 - Taux dcatéggories enregistrés */}
       <Card className="@container/card">
         <CardHeader>
           <CardDescription>Total catégorie</CardDescription>
@@ -125,7 +125,7 @@ export function SectionCards({ stats }: { stats: DashboardStats }) {
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            État des abonnements
+            Total global des catégories enregistrés
           </div>
           <div className="text-muted-foreground">Mesure de la fidélité</div>
         </CardFooter>
