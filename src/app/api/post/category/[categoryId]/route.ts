@@ -35,7 +35,7 @@ export async function DELETE(
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user)
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
-  const { categoryId } = params;
+  const { categoryId } = await params;
 
   try {
     const result = await prisma.$transaction(async (tx) => {

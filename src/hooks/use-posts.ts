@@ -141,6 +141,7 @@ export function useUpdatePostMutation() {
       show("success", data.message || "Article mis à jour avec succès");
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["post"] });
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
     },
     onError: (error) => {
       show(
@@ -459,6 +460,7 @@ export function useDeleteTagMutation() {
 
       // Invalider les requêtes affectées
       queryClient.invalidateQueries({ queryKey: ["tags"] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
     onError: (error: Error) => {
       show("error", error.message || "Erreur lors de la suppression");

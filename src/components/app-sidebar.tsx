@@ -9,7 +9,7 @@ import {
   IconUsers,
   IconFileText,
   IconFolder,
-  IconHash,
+  // IconHash,
 } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -26,7 +26,6 @@ import {
 } from "@/components/ui/sidebar";
 import { LinkIcon } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-// import { useAuthUserQuery } from "@/hooks/use-auth-user";
 
 const data = {
   user: {
@@ -50,11 +49,11 @@ const data = {
       url: "/dashboard/users",
       icon: IconUsers,
     },
-    {
-      title: "Tag",
-      url: "/dashboard/tags",
-      icon: IconHash,
-    },
+    // {
+    //   title: "Tag",
+    //   url: "/dashboard/tags",
+    //   icon: IconHash,
+    // },
     {
       title: "Categories",
       url: "/dashboard/categories",

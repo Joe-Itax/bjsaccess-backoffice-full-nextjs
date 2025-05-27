@@ -45,7 +45,7 @@ export default function PostCard({ post }: PostCardProps) {
         </span>
       </div>
 
-      <div className="h-72 overflow-hidden">
+      <div className="h-72 overflow-hidden transition-all duration-300">
         {post.featuredImage && (
           <Image
             src={post.featuredImage}
@@ -89,10 +89,10 @@ export default function PostCard({ post }: PostCardProps) {
           <div className="flex flex-wrap gap-2 mb-4">
             {post?.tags.map((tagsOnPost) => (
               <span
-                key={tagsOnPost.tag.id}
+                key={tagsOnPost?.tag ? tagsOnPost.tag.id : tagsOnPost.id}
                 className={`inline-block bg-blue-100 rounded-full px-3 py-1 text-xs font-semibold text-blue-800`}
               >
-                #{tagsOnPost.tag.name}
+                #{tagsOnPost?.tag ? tagsOnPost.tag.name : tagsOnPost.name}
               </span>
             ))}
           </div>

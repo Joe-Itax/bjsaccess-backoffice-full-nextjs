@@ -43,7 +43,10 @@ export default function UserDetailsPage() {
     <section className="smp-6 py-4 px-2 size-full container max-w-[55rem] mx-auto flex flex-col gap-8">
       <div className="w-full space-y-6">
         <div className="flex items-start gap-4">
-          <Button variant="ghost" onClick={() => router.back()}>
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/dashboard/users")}
+          >
             <MoveLeftIcon />
           </Button>
           <h2

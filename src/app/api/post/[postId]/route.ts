@@ -124,7 +124,7 @@ export async function PUT(
   if (!session?.user)
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
-  const { postId } = params;
+  const { postId } = await params;
 
   const authenticatedUser = session?.user;
   let tempImagePath: string | null = null;
