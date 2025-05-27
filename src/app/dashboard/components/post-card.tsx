@@ -13,7 +13,6 @@ import {
   UserIcon,
 } from "lucide-react";
 
-
 interface PostCardProps {
   post: Post;
 }
@@ -51,9 +50,9 @@ export default function PostCard({ post }: PostCardProps) {
           <Image
             src={post.featuredImage}
             alt={post.title}
-            className={`w-full h-full object-cover mb-4 ${
+            className={`w-full h-full object-cover mb-4 transition-all duration-300 ${
               hoverBox ? "transform scale-110" : ""
-            } transition-all duration-300`}
+            }`}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             width={800}
             height={400}

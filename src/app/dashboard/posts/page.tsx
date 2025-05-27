@@ -46,7 +46,7 @@ export default function PostsPage() {
           </Button>
         </div>
         {posts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 place-items-center gap-4 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 min-[1450px]:!grid-cols-3 place-items-center gap-4 py-4">
             {posts.map((post: Post) => (
               <div key={post.id} className="size-full flex justify-center">
                 <PostCard post={post} />

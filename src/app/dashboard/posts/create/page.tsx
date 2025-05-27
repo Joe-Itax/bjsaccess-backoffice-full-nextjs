@@ -4,12 +4,8 @@ import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { MoveLeftIcon } from "lucide-react";
-import {
-  useCategoriesQuery,
-  useCreatePostMutation,
-  useTagsQuery,
-} from "@/hooks/use-posts";
-import { Category, Tag } from "@/types/posts";
+import { useCategoriesQuery, useCreatePostMutation } from "@/hooks/use-posts"; // Removed useTagsQuery as tags are now content-driven
+import { Category } from "@/types/posts"; // Removed Tag import
 import Spinner from "@/components/spinner";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
 import { useRouter } from "next/navigation";
@@ -18,7 +14,7 @@ type PostFormData = {
   title: string;
   content: string;
   categoryId: string;
-  tags: string[];
+  // tags: string[]; // Removed as tags are now content-driven
   featuredImage: File | null;
 };
 type PostFormErrors = {
@@ -28,20 +24,18 @@ type PostFormErrors = {
 export default function CreatePost() {
   const { data: categories = [], isPending: catIsPending } =
     useCategoriesQuery();
-  const { data: tags = [], isPending: tagIsPending } = useTagsQuery();
+  // Removed useTagsQuery
   const router = useRouter();
   const [formData, setFormData] = useState<PostFormData>({
     title: "",
     content: "",
     categoryId: "",
-    tags: [],
     featuredImage: null,
   });
   const [errors, setErrors] = useState<PostFormErrors>({});
   const { mutateAsync: createPost, isPending } = useCreatePostMutation();
 
   const validateForm = (): boolean => {
-    // const newErrors: Partial<PostFormData> = {};
     const newErrors: PostFormErrors = {};
     if (!formData.title.trim()) newErrors.title = "Le titre est requis";
     if (!formData.content.trim() || formData.content === "<p></p>")
@@ -65,23 +59,22 @@ export default function CreatePost() {
 
     const form = new FormData();
     form.append("title", formData.title);
-    form.append("content", formData.content); // Append content from Tiptap
+    form.append("content", formData.content); // Content from Tiptap, including #tags
     form.append("categoryId", formData.categoryId);
-    formData.tags.forEach((tagId) => form.append("tags", tagId));
+    // Removed appending tags from formData.tags
     if (formData.featuredImage) {
       form.append("featuredImage", formData.featuredImage);
     }
 
     try {
-      // return console.log("form to send: ", form);
       await createPost(form);
       setFormData({
         title: "",
         content: "",
         categoryId: "",
-        tags: [],
         featuredImage: null,
       });
+      router.push("/dashboard/posts"); // Redirect to posts list after creation
     } catch (err) {
       console.error(err);
     }
@@ -93,21 +86,14 @@ export default function CreatePost() {
     >
   ) => {
     const { name, value } = e.target;
-    if (name === "tags") {
-      const selectedOptions = Array.from(
-        (e.target as HTMLSelectElement).selectedOptions
-      ).map((option) => option.value);
-      setFormData((prev) => ({ ...prev, tags: selectedOptions }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
+    // Removed tag handling
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
     if (errors[name as keyof PostFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
-  // New handler for Tiptap content changes
   const handleEditorChange = (htmlContent: string) => {
     setFormData((prev) => ({ ...prev, content: htmlContent }));
     if (errors.content) {
@@ -121,7 +107,8 @@ export default function CreatePost() {
     setErrors((prev) => ({ ...prev, featuredImage: undefined }));
   };
 
-  if (catIsPending || tagIsPending) {
+  if (catIsPending) {
+    // Removed tagIsPending
     return (
       <div className="w-full py-64 flex justify-center items-center">
         <div className="flex gap-4 items-center">
@@ -134,7 +121,7 @@ export default function CreatePost() {
   return (
     <section className="container size-full mx-auto flex justify-center">
       <div className="px-4 md:p-8 sm:px-4 size-full">
-        <Button variant="ghost" onClick={() => router.back()}>
+        <Button variant="ghost" onClick={() => router.push(`/dashboard/posts`)}>
           <MoveLeftIcon />
         </Button>
         <h1 className="ml-0 mb-4 text-2xl font-bold">Créer un nouveau post</h1>
@@ -157,11 +144,10 @@ export default function CreatePost() {
 
           <div className="space-y-2">
             <Label htmlFor="content">Contenu *</Label>
-            {/* REMOVED: <textarea ... /> */}
             <div className="w-full">
               <SimpleEditor
-                initialContent={formData.content} // Pass current formData.content as initial content
-                onContentChange={handleEditorChange} // Capture changes from the editor
+                initialContent={formData.content}
+                onContentChange={handleEditorChange}
               />
             </div>
             {errors.content && (
@@ -193,6 +179,8 @@ export default function CreatePost() {
             )}
           </div>
 
+          {/* Removed Tags checkbox section */}
+          {/*
           <div className="space-y-2">
             <Label>Tags</Label>
             <div className="flex flex-wrap gap-3">
@@ -218,6 +206,7 @@ export default function CreatePost() {
               ))}
             </div>
           </div>
+          */}
 
           <div className="space-y-2">
             <Label htmlFor="featuredImage">Image à la une</Label>

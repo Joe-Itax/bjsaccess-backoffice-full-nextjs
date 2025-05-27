@@ -2,7 +2,6 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-// import { useState } from "react";
 import { useNotification } from "@/hooks/use-notification";
 import { Category, Post, Tag } from "@/types/posts";
 import { useRouter } from "next/navigation";
@@ -159,13 +158,12 @@ export function usePublishPostMutation() {
   return useMutation({
     mutationFn: async (post: Partial<Post>) => {
       const { id, published } = post;
+      const formData = new FormData();
+      formData.append("published", String(published));
       const res = await fetch(`/api/post/${id}`, {
         method: "PUT",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ published }),
+        body: formData,
       });
       if (!res.ok) throw new Error("Erreur lors de la mise à jour");
       return res.json();
@@ -233,12 +231,9 @@ export function useDeleteCommentMutation() {
       postId: string;
       commentId: string;
     }) => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/posts/admin/${postId}/comments/${commentId}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const res = await fetch(`/api/post/${postId}/comments/${commentId}`, {
+        method: "DELETE",
+      });
 
       if (!res.ok) {
         const error = await res.json();
@@ -273,16 +268,13 @@ export function useModerateCommentMutation() {
       commentId: string;
       action: string;
     }) => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/posts/admin/${postId}/comments/${commentId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ action }),
-        }
-      );
+      const res = await fetch(`/api/post/${postId}/comments/${commentId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action }),
+      });
 
       if (!res.ok) {
         const error = await res.json();

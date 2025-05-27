@@ -76,7 +76,10 @@ export async function GET(
     });
 
     if (!post) {
-      return NextResponse.json({ message: "Article introuvable." }, { status: 404 });
+      return NextResponse.json(
+        { message: "Article introuvable." },
+        { status: 404 }
+      );
     }
 
     // Check permissions if not published and not back-office
@@ -99,7 +102,10 @@ export async function GET(
     const errorMessage =
       error instanceof Error ? error.message : "An unknown error occurred.";
     return NextResponse.json(
-      { message: "Erreur lors de la récupération de l'article.", error: errorMessage },
+      {
+        message: "Erreur lors de la récupération de l'article.",
+        error: errorMessage,
+      },
       { status: 500 }
     );
   }
@@ -109,6 +115,7 @@ export async function GET(
  * @route PUT /api/post/:id
  * @description Update a post by ID
  */
+
 export async function PUT(
   req: NextRequest,
   { params }: { params: { postId: string } }
@@ -117,52 +124,19 @@ export async function PUT(
   if (!session?.user)
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
-  const { postId } = await params;
+  const { postId } = params;
 
-  const authenticatedUser = session.user;
+  const authenticatedUser = session?.user;
   let tempImagePath: string | null = null;
 
   try {
     const formData = await req.formData();
     const title = formData.get("title") as string | null;
-    const content = formData.get("content") as string | null;
+    let content = formData.get("content") as string | null;
     const categoryId = formData.get("categoryId") as string | null;
     const published = formData.get("published")
       ? JSON.parse(formData.get("published") as string)
       : undefined;
-    const tagsFromFormData = formData.getAll("tagIds");
-
-    let tagIds: string[] = [];
-
-    if (tagsFromFormData.length > 0) {
-      if (tagsFromFormData.length === 1) {
-        const singleTagString = tagsFromFormData[0];
-        try {
-          const parsed = JSON.parse(singleTagString.toString());
-          if (Array.isArray(parsed)) {
-            tagIds = parsed.filter((id) => typeof id === "string");
-          } else if (typeof parsed === "string") {
-            tagIds = parsed
-              .split(",")
-              .map((tag) => tag.trim())
-              .filter((tag) => tag);
-          }
-        } catch (e) {
-          console.error(
-            "Error parsing single tag string as JSON, attempting comma-separated:",
-            e
-          );
-          tagIds = singleTagString
-            .toString()
-            .split(",")
-            .map((tag) => tag.trim())
-            .filter((tag) => tag);
-        }
-      } else {
-        tagIds = tagsFromFormData.map((id) => id.toString());
-      }
-    }
-
     const featuredImageFile = formData.get("featuredImage") as Blob | null;
 
     // Reject extra fields
@@ -170,14 +144,13 @@ export async function PUT(
       "title",
       "content",
       "categoryId",
-      "tagIds",
       "published",
       "featuredImage",
     ]);
     for (const key of formData.keys()) {
       if (!allowedFields.has(key)) {
         return NextResponse.json(
-          { message: `Unauthorized field detected: ${key}` },
+          { message: `Champ non autorisé détecté: ${key}` },
           { status: 400 }
         );
       }
@@ -190,7 +163,7 @@ export async function PUT(
       // 1. Check if post exists and user has permission
       const existingPost = await tx.post.findUnique({
         where: { id: postId },
-        include: { author: true },
+        include: { author: true, tags: true }, // Include tags for cleanup
       });
 
       if (!existingPost) {
@@ -214,14 +187,47 @@ export async function PUT(
         }
       }
 
-      // 3. Check tags if provided
-      if (tagIds.length > 0) {
-        const existingTags = await tx.tag.findMany({
-          where: { id: { in: tagIds } },
-        });
-        if (existingTags.length !== tagIds.length) {
-          throw new Error("Un ou plusieurs tags sont invalides.");
+      // 3. Extraction, création et stylisation des tags à partir du contenu HTML (si le contenu a changé)
+      let finalTagIds: string[] = [];
+      if (content && content !== existingPost.content) {
+        const extractedTags = new Set<string>();
+        const hashtagRegex = /#(\w+)/g;
+
+        // Utilise une copie temporaire pour la regex pour éviter les problèmes avec `lastIndex`
+        const tempContentForRegex = content;
+        let match;
+        while ((match = hashtagRegex.exec(tempContentForRegex)) !== null) {
+          if (match.index === hashtagRegex.lastIndex) {
+            hashtagRegex.lastIndex++;
+          }
+          extractedTags.add(match[1]);
         }
+
+        // Créer ou récupérer les IDs des tags extraits
+        for (const tagName of extractedTags) {
+          let tag = await tx.tag.findUnique({
+            where: { name: tagName },
+          });
+
+          if (!tag) {
+            tag = await tx.tag.create({
+              data: { name: tagName, slug: removeAccents(tagName) },
+            });
+          }
+          finalTagIds.push(tag.id);
+        }
+
+        // Remplacer les occurrences de tags par la balise span stylisée
+        for (const tagName of extractedTags) {
+          const replaceRegex = new RegExp(`#(${tagName})\\b`, "g");
+          content = content.replace(
+            replaceRegex,
+            `<span class="tiptap-tag">#$1</span>`
+          );
+        }
+      } else {
+        // If content hasn't changed, retain existing tags in the database
+        finalTagIds = existingPost.tags.map((t) => t.tagId);
       }
 
       // 4. Generate new slug if title changes
@@ -233,7 +239,6 @@ export async function PUT(
       }
 
       // 5. Handle featured image update
-      let prefix;
       if (featuredImageFile && featuredImageFile.size > 0) {
         if (existingPost.featuredImage) {
           oldImagePathToDelete = path.join(
@@ -241,45 +246,37 @@ export async function PUT(
             "public",
             existingPost.featuredImage
           );
-
-          prefix = `featured-${existingPost.id}-${existingPost.title}`;
-          featuredImagePath = await handleUpload({
-            file: featuredImageFile,
-            folder: "featured-images",
-            filenamePrefix: prefix,
-          });
-          tempImagePath = featuredImagePath;
         }
+        const prefix = `featured-${existingPost.id}-${
+          newSlug || existingPost.slug
+        }`;
+        featuredImagePath = await handleUpload({
+          file: featuredImageFile,
+          folder: "featured-images",
+          filenamePrefix: prefix,
+        });
+        tempImagePath = featuredImagePath; // For cleanup if transaction fails
       }
 
       // Prepare update data
       const updateData: Prisma.PostUpdateInput = {
-        title: title || existingPost.title,
+        title: title ?? existingPost.title,
         slug: newSlug,
-        content: content || existingPost.content,
-        category: {
-          connect: { id: categoryId || existingPost.categoryId },
-        },
-        // categoryId: categoryId || existingPost.categoryId,
-        ...(tagIds && {
-          tags: {
-            create: tagIds.map((tagId) => ({ tagId })),
-          },
-        }),
+        content: content ?? existingPost.content,
+        category: categoryId ? { connect: { id: categoryId } } : undefined,
         published: published ?? existingPost.published,
         searchableTitle: newSearchableTitle,
         featuredImage: featuredImagePath ?? existingPost.featuredImage,
       };
 
-      if (tagsFromFormData.length > 0 || formData.has("tagIds")) {
-        await tx.tagsOnPosts.deleteMany({
-          where: { postId: existingPost.id },
-        });
-        if (tagIds.length > 0) {
-          updateData.tags = {
-            create: tagIds.map((tagId) => ({ tagId })),
-          };
-        }
+      // Update tags association: delete existing and create new ones based on finalTagIds
+      await tx.tagsOnPosts.deleteMany({
+        where: { postId: existingPost.id },
+      });
+      if (finalTagIds.length > 0) {
+        updateData.tags = {
+          create: finalTagIds.map((tagId) => ({ tagId })),
+        };
       }
 
       return await tx.post.update({
@@ -301,7 +298,8 @@ export async function PUT(
     });
 
     // Delete old image file AFTER successful transaction
-    if (oldImagePathToDelete && fs.existsSync(oldImagePathToDelete)) {
+    if (oldImagePathToDelete) {
+      // Check if a path was actually set
       try {
         fs.unlinkSync(oldImagePathToDelete);
         console.log("Old featured image deleted:", oldImagePathToDelete);
@@ -327,13 +325,11 @@ export async function PUT(
         tempImagePath
       );
       try {
-        if (fs.existsSync(fullTempImagePath)) {
-          fs.unlinkSync(fullTempImagePath);
-          console.log(
-            "Cleaned up new uploaded image due to update error:",
-            fullTempImagePath
-          );
-        }
+        fs.unlinkSync(fullTempImagePath);
+        console.log(
+          "Cleaned up new uploaded image due to update error:",
+          fullTempImagePath
+        );
       } catch (unlinkError) {
         console.error(
           "Failed to delete temporary image after update error:",
@@ -351,14 +347,14 @@ export async function PUT(
     ) {
       if ((error as { code: string }).code === "P2002") {
         return NextResponse.json(
-          { message: "A post with this title/slug already exists." },
+          { message: "Un article avec ce titre/slug existe déjà." },
           { status: 400 }
         );
       }
       if ((error as { code: string }).code === "P2025") {
         // Record not found
         return NextResponse.json(
-          { message: "Post not found or could not be updated." },
+          { message: "Article non trouvé ou n'a pas pu être mis à jour." },
           { status: 404 }
         );
       }
@@ -368,15 +364,14 @@ export async function PUT(
     if (error instanceof Error) {
       if (
         [
-          "Post not found",
-          "Unauthorized to modify this post",
-          "Category not found",
-          "One or more tags are invalid",
+          "Article non trouvé",
+          "Vous n'êtes pas autorisé à modifier cet article.",
+          "Catégorie non trouvée",
         ].includes(error.message)
       ) {
-        const status = error.message.includes("not found")
+        const status = error.message.includes("non trouvé")
           ? 404
-          : error.message.includes("Unauthorized")
+          : error.message.includes("autorisé")
           ? 403
           : 400;
         return NextResponse.json(
@@ -386,14 +381,20 @@ export async function PUT(
       }
       // General error
       return NextResponse.json(
-        { message: "Error updating post", error: error.message },
+        {
+          message: "Erreur lors de la mise à jour de l'article.",
+          error: error.message,
+        },
         { status: 500 }
       );
     }
 
     // Fallback for unknown errors
     return NextResponse.json(
-      { message: "An unknown error occurred while updating the post." },
+      {
+        message:
+          "Une erreur inconnue est survenue lors de la mise à jour de l'article.",
+      },
       { status: 500 }
     );
   }

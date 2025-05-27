@@ -7,7 +7,7 @@ import { generateUniqueSlug } from "@/utils/generate-unique-slug";
 
 import { removeAccents } from "@/utils/user-utils";
 import { handleUpload } from "@/lib/middlewares/upload-file";
-import fs from "fs/promises";
+import fs from "fs";
 
 export const config = {
   api: {
@@ -129,219 +129,6 @@ export async function GET(req: NextRequest) {
  * @route POST /api/post
  * @description Create a new post
  */
-// export async function POST(req: NextRequest) {
-//   const session = await auth.api.getSession({ headers: await headers() });
-//   if (!session?.user)
-//     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
-//   try {
-//     // Handling file upload for featuredImage
-//     const formData = await req.formData();
-//     const title = formData.get("title") as string;
-//     const content = formData.get("content") as string;
-//     const categoryId = formData.get("categoryId") as string;
-//     const authorId = session?.user.id as string;
-//     // const tagsRaw = formData.get("tags") as string | null; // Tags can be comma-separated string or JSON array string
-//     const tagsRaw = formData.get("tags") as string | null; // This gets only the first 'tags' value if multiple are sent
-//     const allTagsRaw = formData.getAll("tags"); // Use this to get all values if 'tags' is sent multiple times
-
-//     let tagIds: string[] = [];
-
-//     // Prioritize parsing as a JSON array or from getAll, then fallback to single comma-separated string
-//     if (allTagsRaw.length > 1) {
-//       // If multiple 'tags' fields were sent (e.g., via multiple checkboxes)
-//       // tagIds = allTagsRaw.filter((id) => typeof id === "string");
-//       tagIds = allTagsRaw
-//         .map((id) => id.toString())
-//         .filter((id) => typeof id === "string");
-//     } else if (tagsRaw) {
-//       try {
-//         const parsedTags = JSON.parse(tagsRaw);
-//         if (Array.isArray(parsedTags)) {
-//           tagIds = parsedTags.filter((id) => typeof id === "string");
-//         } else if (typeof parsedTags === "string") {
-//           // Fallback for comma-separated string within a single field
-//           tagIds = parsedTags
-//             .split(",")
-//             .map((tag) => tag.trim())
-//             .filter((tag) => tag);
-//         }
-//       } catch (e) {
-//         console.error("Error parsing tags (attempting fallback):", e);
-//         // Fallback for non-JSON string if parsing fails (e.g., just a plain comma-separated string)
-//         tagIds = tagsRaw
-//           .split(",")
-//           .map((tag) => tag.trim())
-//           .filter((tag) => tag);
-//       }
-//     }
-//     const featuredImageFile = formData.get("featuredImage") as Blob | null;
-
-//     // Reject extra fields - FormData needs explicit handling for this
-//     const allowedFields = new Set([
-//       "title",
-//       "content",
-//       "categoryId",
-//       "authorId",
-//       "tags",
-//       "featuredImage",
-//     ]);
-//     for (const key of formData.keys()) {
-//       if (!allowedFields.has(key)) {
-//         return NextResponse.json(
-//           { message: `Unauthorized field detected: ${key}` },
-//           { status: 400 }
-//         );
-//       }
-//     }
-
-//     // Validation des champs obligatoires
-//     if (!title || !content || !categoryId || !featuredImageFile) {
-//       return NextResponse.json(
-//         {
-//           message: "Title, content, and category are required.",
-//           requiredFields: ["title", "content", "categoryId"],
-//         },
-//         { status: 400 }
-//       );
-//     }
-
-//     let featuredImagePath: string | null = null;
-//     let tempImagePath: string | null = null;
-
-//     try {
-//       const post = await prisma.$transaction(async (tx) => {
-//         const category = await tx.category.findUnique({
-//           where: { id: categoryId },
-//         });
-//         if (!category) {
-//           throw new Error("Categorie non trouvée.");
-//         }
-
-//         // Check if tags exist
-//         if (tagIds.length > 0) {
-//           const existingTags = await tx.tag.findMany({
-//             where: { id: { in: tagIds } },
-//           });
-//           if (existingTags.length !== tagIds.length) {
-//             throw new Error("Un ou plusieurs tag sont invalide.");
-//           }
-//         }
-
-//         const slug = await generateUniqueSlug(title, "post");
-//         const searchableTitle = removeAccents(title);
-
-//         const postCreated = await tx.post.create({
-//           data: {
-//             title,
-//             searchableTitle,
-//             slug,
-//             content,
-//             authorId,
-//             categoryId,
-//             tags: {
-//               create: tagIds.map((tagId) => ({ tagId })),
-//             },
-//           },
-//           include: {
-//             category: true,
-//             tags: { include: { tag: true } },
-//             author: {
-//               select: {
-//                 id: true,
-//                 name: true,
-//                 image: true,
-//               },
-//             },
-//           },
-//         });
-
-//         const prefix = `featured-${postCreated.id}-${postCreated.title}`;
-//         featuredImagePath = await handleUpload({
-//           file: featuredImageFile,
-//           folder: "featured-images",
-//           filenamePrefix: prefix,
-//         });
-//         tempImagePath = featuredImagePath;
-
-//         return await tx.post.update({
-//           where: { id: postCreated.id },
-//           data: { featuredImage: featuredImagePath },
-//           include: {
-//             category: true,
-//             tags: { include: { tag: true } },
-//             author: {
-//               select: {
-//                 id: true,
-//                 name: true,
-//                 image: true,
-//               },
-//             },
-//           },
-//         });
-//       });
-
-//       return NextResponse.json(
-//         { message: "Article créée avec succès.", post },
-//         { status: 201 }
-//       );
-//     } catch (transactionError) {
-//       if (tempImagePath) {
-//         try {
-//           await fs.unlink(tempImagePath);
-//           console.log(
-//             "Cleaned up uploaded image due to transaction error:",
-//             tempImagePath
-//           );
-//         } catch (unlinkError) {
-//           console.error("Failed to delete temporary image:", unlinkError);
-//         }
-//       }
-
-//       throw transactionError;
-//     }
-//   } catch (error) {
-//     console.error("Error creating post:", error);
-
-//     if (
-//       typeof error === "object" &&
-//       error !== null &&
-//       "code" in error &&
-//       typeof (error as { code: unknown }).code === "string"
-//     ) {
-//       if ((error as { code: string }).code === "P2002") {
-//         return NextResponse.json(
-//           { message: "Un article avec ce titre/slug existe déjà." },
-//           { status: 400 }
-//         );
-//       }
-//     }
-
-//     if (error instanceof Error) {
-//       if (
-//         error.message === "Categorie non trouvée." ||
-//         error.message === "Un ou plusieurs tag sont invalide."
-//       ) {
-//         return NextResponse.json({ message: error.message }, { status: 400 });
-//       }
-//       return NextResponse.json(
-//         {
-//           message: "Erreur lors de la création d'un article.",
-//           error: error.message,
-//         },
-//         { status: 500 }
-//       );
-//     }
-
-//     return NextResponse.json(
-//       {
-//         message:
-//           "Une erreur inconnue est survenue lors de la création de l'article. Veuillez réessayer plus tard.",
-//       },
-//       { status: 500 }
-//     );
-//   }
-// }
-
 export async function POST(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) {
@@ -353,13 +140,12 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const title = formData.get("title") as string;
-    const content = formData.get("content") as string;
+    let content = formData.get("content") as string;
     const categoryId = formData.get("categoryId") as string;
     const authorId = session?.user.id as string;
-    const allTagsRaw = formData.getAll("tags"); // Récupère tous les tags de la case à cocher
     const featuredImageFile = formData.get("featuredImage") as Blob | null;
 
-    // --- Validation des champs obligatoires  ---
+    // --- Validation des champs obligatoires ---
     if (!title || !content || !categoryId || !featuredImageFile) {
       const missingFields = [];
       if (!title) missingFields.push("title");
@@ -391,7 +177,6 @@ export async function POST(req: NextRequest) {
       "title",
       "content",
       "categoryId",
-      "tags",
       "featuredImage",
     ]);
     for (const key of formData.keys()) {
@@ -403,41 +188,46 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // --- Traitement des tags existants (provenant des checkboxes) ---
-    let tagIdsFromForm: string[] = [];
-    if (allTagsRaw.length > 0) {
-      tagIdsFromForm = allTagsRaw.map((id) => id.toString()).filter(Boolean); // Filter(Boolean) pour enlever les chaînes vides
-    }
-
-    // --- Extraction et création de tags à partir du contenu HTML ---
+    // --- Extraction, création et stylisation des tags à partir du contenu HTML ---
     const extractedTags = new Set<string>(); // Utilisation de Set pour éviter les doublons
     const hashtagRegex = /#(\w+)/g; // Capture le mot après '#'
+
+    // Utilise une copie temporaire pour la regex pour éviter les problèmes avec `lastIndex`
+    const tempContentForRegex = content;
     let match;
-    while ((match = hashtagRegex.exec(content)) !== null) {
+    while ((match = hashtagRegex.exec(tempContentForRegex)) !== null) {
+      // Pour éviter des boucles infinies sur des regex malformées ou du contenu très grand
+      if (match.index === hashtagRegex.lastIndex) {
+        hashtagRegex.lastIndex++;
+      }
       extractedTags.add(match[1]); // Ajoute le mot sans le '#'
     }
 
+    const finalTagIds: string[] = [];
+
     // Créer ou récupérer les IDs des tags extraits
-    const newOrExistingTagIds: string[] = [];
     for (const tagName of extractedTags) {
-      // Vérifier si le tag existe déjà
       let tag = await prisma.tag.findUnique({
         where: { name: tagName },
       });
 
-      // Si le tag n'existe pas, le créer
       if (!tag) {
         tag = await prisma.tag.create({
           data: { name: tagName, slug: removeAccents(tagName) },
         });
       }
-      newOrExistingTagIds.push(tag.id);
+      finalTagIds.push(tag.id);
     }
 
-    // Combiner les tags du formulaire et les tags extraits, et enlever les doublons
-    const finalTagIds = Array.from(
-      new Set([...tagIdsFromForm, ...newOrExistingTagIds])
-    );
+    // Remplacer les occurrences de tags par la balise span stylisée
+    for (const tagName of extractedTags) {
+      // Crée une regex pour chaque tag, sensible à la casse, et ne remplace que les occurrences de #tag
+      const replaceRegex = new RegExp(`#(${tagName})\\b`, "g"); // \b pour une limite de mot
+      content = content.replace(
+        replaceRegex,
+        `<span class="tiptap-tag">#$1</span>`
+      );
+    }
 
     let featuredImagePath: string | null = null;
 
@@ -449,26 +239,6 @@ export async function POST(req: NextRequest) {
         if (!category) {
           throw new Error("Catégorie non trouvée.");
         }
-
-        // Vérifier si les tags du formulaire existent (ceux que l'utilisateur a cochés)
-        if (tagIdsFromForm.length > 0) {
-          const existingTags = await tx.tag.findMany({
-            where: { id: { in: tagIdsFromForm } },
-          });
-          if (existingTags.length !== tagIdsFromForm.length) {
-            const invalidTagIds = tagIdsFromForm.filter(
-              (id) => !existingTags.some((tag) => tag.id === id)
-            );
-            console.log(
-              "Un ou plusieurs tags sélectionnés sont invalides: ",
-              invalidTagIds
-            );
-            throw new Error(
-              "Un ou plusieurs tags sélectionnés sont invalides."
-            );
-          }
-        }
-        // Pas besoin de vérifier newOrExistingTagIds car ils sont garantis d'exister (ou d'être créés)
 
         const slug = await generateUniqueSlug(title, "post");
         const searchableTitle = removeAccents(title);
@@ -504,7 +274,7 @@ export async function POST(req: NextRequest) {
           folder: "featured-images",
           filenamePrefix: prefix,
         });
-        tempImagePath = featuredImagePath; // Pour la suppression en cas d'échec de la transaction
+        tempImagePath = featuredImagePath;
 
         return await tx.post.update({
           where: { id: postCreated.id },
@@ -528,10 +298,9 @@ export async function POST(req: NextRequest) {
         { status: 201 }
       );
     } catch (transactionError) {
-      // Nettoyage de l'image téléchargée si la transaction échoue
       if (tempImagePath) {
         try {
-          await fs.unlink(tempImagePath);
+          fs.unlinkSync(tempImagePath);
           console.log(
             "Cleaned up uploaded image due to transaction error:",
             tempImagePath
@@ -540,15 +309,14 @@ export async function POST(req: NextRequest) {
           console.error("Failed to delete temporary image:", unlinkError);
         }
       }
-      throw transactionError; // Propage l'erreur pour la gestion globale
+      throw transactionError;
     }
   } catch (error) {
     console.error("Error creating post:", error);
 
-    // Si une erreur survient avant la transaction et que tempImagePath est défini (peu probable si l'upload est dans la transaction)
     if (tempImagePath) {
       try {
-        await fs.unlink(tempImagePath);
+        fs.unlinkSync(tempImagePath);
         console.log(
           "Cleaned up uploaded image from initial upload due to error:",
           tempImagePath
@@ -567,16 +335,13 @@ export async function POST(req: NextRequest) {
       if ((error as { code: string }).code === "P2002") {
         return NextResponse.json(
           { message: "Un article avec ce titre/slug existe déjà." },
-          { status: 409 } // 409 Conflict est plus approprié pour un doublon
+          { status: 409 }
         );
       }
     }
 
     if (error instanceof Error) {
-      if (
-        error.message === "Catégorie non trouvée." ||
-        error.message === "Un ou plusieurs tags sélectionnés sont invalides."
-      ) {
+      if (error.message === "Catégorie non trouvée.") {
         return NextResponse.json({ message: error.message }, { status: 400 });
       }
       return NextResponse.json(

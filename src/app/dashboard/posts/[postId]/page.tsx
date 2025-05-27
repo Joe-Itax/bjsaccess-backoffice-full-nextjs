@@ -16,24 +16,22 @@ import {
   CircleAlertIcon,
   CircleOffIcon,
   MoveLeftIcon,
+  PencilLineIcon,
   UserIcon,
 } from "lucide-react";
 import { IconDotsVertical } from "@tabler/icons-react";
 
 import {
-  useCategoriesQuery,
   useDeleteCommentMutation,
   useModerateCommentMutation,
   usePostByIdQuery,
   usePublishPostMutation,
-  useTagsQuery,
 } from "@/hooks/use-posts";
-import { Comment, Tag } from "@/types/posts";
+import { Comment } from "@/types/posts";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import DeletePost from "../../components/delete-post";
-import UpdatePost from "../../components/update-post";
 
 // --- Tiptap Node Styles (from simple-editor.tsx) ---
 import "@/styles/tiptap-content-render.scss";
@@ -42,10 +40,6 @@ export default function PostDetailsPage() {
   const { postId } = useParams();
   const router = useRouter();
 
-  const { data: categories } = useCategoriesQuery();
-  //   const categories = dataCategories?.data;
-  const { data: tags } = useTagsQuery();
-  //   const tags = datatags?.data;
   const { data, isLoading, isError, refetch } = usePostByIdQuery(
     postId as string
   );
@@ -96,10 +90,13 @@ export default function PostDetailsPage() {
 
   return (
     <section className="smp-6 py-4 px-2 size-full container max-w-[55rem] mx-auto flex flex-col gap-8">
-      <div className="mx-auto">
+      <div className="mx-auto sm:w-5/6 w-full">
         <div className="w-full space-y-6">
           <div className="flex items-start gap-4">
-            <Button variant="ghost" onClick={() => router.back()}>
+            <Button
+              variant="ghost"
+              onClick={() => router.push(`/dashboard/posts`)}
+            >
               <MoveLeftIcon />
             </Button>
             <h2 className={`text-2xl font-bold px-2`}>{post.title}</h2>
@@ -160,7 +157,13 @@ export default function PostDetailsPage() {
           <div>
             <h2 className="text-lg font-bold">Actions</h2>
             <div className="flex gap-2">
-              <UpdatePost post={post} categories={categories} tags={tags} />
+              <Button
+                variant="outline"
+                onClick={() => router.push(`/dashboard/posts/${post.id}/edit`)}
+              >
+                <PencilLineIcon className="mr-2 h-4 w-4" />
+                Modifier
+              </Button>
               <DeletePost post={post} />
             </div>
             <div></div>
@@ -179,25 +182,18 @@ export default function PostDetailsPage() {
               width={800}
               height={400}
               alt={post.title}
-              className="size-full object-fill"
+              className="size-full object-cover"
             />
           </div>
 
           <div className="w-full">
-            <h2 className="text-xl font-bold">{post.title}</h2>
+            <h1 className="text-4xl font-bold">{post.title}</h1>
           </div>
           <div className="w-full">
-            <div className="post-content-container" dangerouslySetInnerHTML={{ __html: post.content }}></div>
-          </div>
-          <div className="w-full flex">
-            {post.tags.map((tag: Tag) => (
-              <span
-                key={tag.id}
-                className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2"
-              >
-                #{tag.name}
-              </span>
-            ))}
+            <div
+              className="post-content-container"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            ></div>
           </div>
         </div>
 

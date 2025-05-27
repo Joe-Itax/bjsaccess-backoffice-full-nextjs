@@ -1,12 +1,11 @@
 "use client";
 
-import * as React from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
 
 // --- Tiptap Core Extensions ---
 import { StarterKit } from "@tiptap/starter-kit";
-// import { Image } from "@tiptap/extension-image"; // REMOVED
 import { TaskItem } from "@tiptap/extension-task-item";
 import { TaskList } from "@tiptap/extension-task-list";
 import { TextAlign } from "@tiptap/extension-text-align";
@@ -31,7 +30,6 @@ import {
 } from "@/components/tiptap-ui-primitive/toolbar";
 
 // --- Tiptap Node ---
-// import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension"; // REMOVED
 import "@/components/tiptap-node/code-block-node/code-block-node.scss";
 import "@/components/tiptap-node/list-node/list-node.scss";
 import "@/components/tiptap-node/image-node/image-node.scss";
@@ -39,7 +37,6 @@ import "@/components/tiptap-node/paragraph-node/paragraph-node.scss";
 
 // --- Tiptap UI ---
 import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu";
-// import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button"; // REMOVED
 import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu";
 import { BlockQuoteButton } from "@/components/tiptap-ui/blockquote-button";
 import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button";
@@ -181,10 +178,10 @@ export function SimpleEditor({
 }: SimpleEditorProps) {
   const isMobile = useMobile();
   const windowSize = useWindowSize();
-  const [mobileView, setMobileView] = React.useState<
-    "main" | "highlighter" | "link"
-  >("main");
-  const toolbarRef = React.useRef<HTMLDivElement>(null);
+  const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">(
+    "main"
+  );
+  const toolbarRef = useRef<HTMLDivElement>(null);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -209,28 +206,44 @@ export function SimpleEditor({
       Subscript,
 
       Selection,
-      // ImageUploadNode.configure({ // REMOVED
-      //   accept: "image/*",
-      //   maxSize: MAX_FILE_SIZE,
-      //   limit: 3,
-      //   upload: handleImageUpload,
-      //   onError: (error) => console.error("Upload failed:", error),
-      // }),
       TrailingNode,
       Link.configure({ openOnClick: false }),
     ],
-    content: initialContent, // Use initialContent prop
+    content: initialContent,
     onUpdate: ({ editor }) => {
-      onContentChange(editor.getHTML()); // Call onContentChange with HTML content
+      onContentChange(editor.getHTML());
     },
   });
+  // THIS IS THE NEW EFFECT TO HANDLE PROP CHANGES
+  useEffect(() => {
+    // Ensure editor is initialized and initialContent is not null/undefined
+    if (editor && initialContent !== undefined && initialContent !== null) {
+      const currentEditorContent = editor.getHTML();
+
+      // Normalize content for comparison:
+      // - Trim whitespace
+      // - Replace empty paragraph tags with an empty string, as Tiptap often outputs <p></p>
+      const normalizedCurrentContent = currentEditorContent
+        .trim()
+        .replace(/^<p><\/p>$/, "");
+      const normalizedInitialContent = initialContent
+        .trim()
+        .replace(/^<p><\/p>$/, "");
+
+      // Only update if the content actually differs to prevent infinite loops
+      // and unnecessary re-renders.
+      if (normalizedCurrentContent !== normalizedInitialContent) {
+        editor.commands.setContent(normalizedInitialContent, false); // `false` prevents setting selection at the end
+      }
+    }
+  }, [editor, initialContent]); // Dependency array: re-run this effect when `editor` or `initialContent` changes
 
   const bodyRect = useCursorVisibility({
     editor,
     overlayHeight: toolbarRef.current?.getBoundingClientRect().height ?? 0,
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isMobile && mobileView !== "main") {
       setMobileView("main");
     }
