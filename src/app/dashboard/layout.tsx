@@ -50,8 +50,8 @@ export default function DashboardLayout({
       <AppSidebar variant="inset" />
       <SidebarInset>
         <SiteHeader />
-        <main className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
+        <main className="flex flex-col size-full overflow-auto">
+          <div className="@container/main flex flex-col gap-2">
             {children}
           </div>
         </main>

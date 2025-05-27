@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import "../styles/globals.css";
 import { NotificationManager } from "@/components/notification-manager";
 import { UserState } from "@/components/user-state";
 import { ReactQueryProvider } from "@/providers/react-query-provider";

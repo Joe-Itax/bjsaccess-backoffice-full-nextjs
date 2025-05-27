@@ -35,14 +35,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import DeletePost from "../../components/delete-post";
 import UpdatePost from "../../components/update-post";
 
+// --- Tiptap Node Styles (from simple-editor.tsx) ---
+import "@/styles/tiptap-content-render.scss";
+
 export default function PostDetailsPage() {
   const { postId } = useParams();
   const router = useRouter();
 
   const { data: categories } = useCategoriesQuery();
-//   const categories = dataCategories?.data;
+  //   const categories = dataCategories?.data;
   const { data: tags } = useTagsQuery();
-//   const tags = datatags?.data;
+  //   const tags = datatags?.data;
   const { data, isLoading, isError, refetch } = usePostByIdQuery(
     postId as string
   );
@@ -184,7 +187,7 @@ export default function PostDetailsPage() {
             <h2 className="text-xl font-bold">{post.title}</h2>
           </div>
           <div className="w-full">
-            <p className="whitespace-pre-line">{post.content}</p>
+            <div className="post-content-container" dangerouslySetInnerHTML={{ __html: post.content }}></div>
           </div>
           <div className="w-full flex">
             {post.tags.map((tag: Tag) => (
@@ -193,7 +196,6 @@ export default function PostDetailsPage() {
                 className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2"
               >
                 #{tag.name}
-                
               </span>
             ))}
           </div>

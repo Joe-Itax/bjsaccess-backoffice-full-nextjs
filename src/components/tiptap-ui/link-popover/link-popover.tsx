@@ -311,6 +311,7 @@ export function LinkPopover({
           disabled={isDisabled}
           data-active-state={isActive ? "on" : "off"}
           data-disabled={isDisabled}
+          className="cursor-pointer"
           {...props}
         />
       </PopoverTrigger>
@@ -319,7 +320,7 @@ export function LinkPopover({
         <LinkMain {...linkHandler} />
       </PopoverContent>
     </Popover>
-  )
+  );
 }
 
 LinkButton.displayName = "LinkButton"

@@ -1,0 +1,403 @@
+// Importation des polices utilisées dans l'éditeur Tiptap
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+
+// Définition des variables CSS utilisées pour le thème clair et sombre
+// Ces variables sont encapsulées dans la classe `.post-content-container`
+// afin qu'elles s'appliquent spécifiquement au contenu rendu.
+.post-content-container {
+  // Variables par défaut pour le thème clair
+  --tt-inline-code-bg-color: #f0f0f0; /* Exemple: Remplace par ta couleur réelle si `--tt-gray-light-a-100` n'est pas global */
+  --tt-inline-code-text-color: #666; /* Exemple: Remplace par ta couleur réelle */
+  --tt-inline-code-border-color: #ccc; /* Exemple: Remplace par ta couleur réelle */
+  --tt-codeblock-bg: #f9f9f9; /* Exemple: Remplace par ta couleur réelle */
+  --tt-codeblock-text: #333; /* Exemple: Remplace par ta couleur réelle */
+  --tt-codeblock-border: #eee; /* Exemple: Remplace par ta couleur réelle */
+
+  --tt-checklist-bg-color: #f0f0f0;
+  --tt-checklist-bg-active-color: #333;
+  --tt-checklist-border-color: #ccc;
+  --tt-checklist-border-active-color: #333;
+  --tt-checklist-check-icon-color: white;
+  --tt-checklist-text-active: #888;
+
+  --blockquote-bg-color: #333; /* Couleur de la barre verticale de citation */
+  --link-text-color: #007bff; /* Couleur des liens */
+  --separator-color: #ddd; /* Couleur des séparateurs (hr) */
+  --tt-radius-xs: 0.25rem; // Rayon de bordure si utilisé
+
+  // Variables pour le thème sombre (si ton application gère un mode sombre via la classe `dark` sur `html` ou `body`)
+  .dark & {
+    --tt-inline-code-bg-color: #2a2a2a;
+    --tt-inline-code-text-color: #b3b3b3;
+    --tt-inline-code-border-color: #444;
+    --tt-codeblock-bg: #222;
+    --tt-codeblock-text: #b3b3b3;
+    --tt-codeblock-border: #444;
+
+    --tt-checklist-bg-color: #2a2a2a;
+    --tt-checklist-bg-active-color: #ccc;
+    --tt-checklist-border-color: #444;
+    --tt-checklist-border-active-color: #ccc;
+    --tt-checklist-check-icon-color: black;
+    --tt-checklist-text-active: #777;
+
+    --blockquote-bg-color: #ccc;
+    --link-text-color: #69c0ff;
+    --separator-color: #555;
+  }
+
+  // Styles généraux pour le contenu textuel
+  font-family: "DM Sans", sans-serif;
+  line-height: 1.6;
+  color: #333; // Couleur par défaut pour le texte du contenu
+  .dark & {
+    color: #f0f0f0; // Couleur du texte en mode sombre
+  }
+
+  // HEADINGS (Titres)
+  h1,
+  h2,
+  h3,
+  h4 {
+    position: relative;
+    color: inherit;
+    font-style: inherit;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  h1 {
+    font-size: 2.5em;
+    font-weight: 700;
+    margin-top: 3em;
+    margin-bottom: 0.5em;
+  }
+
+  h2 {
+    font-size: 2em;
+    font-weight: 700;
+    margin-top: 2.5em;
+    margin-bottom: 0.5em;
+  }
+
+  h3 {
+    font-size: 1.5em;
+    font-weight: 600;
+    margin-top: 2em;
+    margin-bottom: 0.5em;
+  }
+
+  h4 {
+    font-size: 1.25em;
+    font-weight: 600;
+    margin-top: 2em;
+    margin-bottom: 0.5em;
+  }
+
+  // PARAGRAPH
+  p {
+    font-size: 1rem;
+    line-height: 1.6;
+    font-weight: normal;
+    margin-top: 20px;
+    margin-bottom: 0; // Réinitialise le margin-bottom pour un meilleur contrôle
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  // LISTS (Ordonnées et non ordonnées)
+  ol,
+  ul {
+    margin-top: 1.5em;
+    margin-bottom: 1.5em;
+    padding-left: 1.5em;
+
+    &:first-child {
+      margin-top: 0;
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    ol,
+    ul {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+  }
+
+  li {
+    p {
+      margin-top: 0;
+    }
+  }
+
+  ol {
+    list-style: decimal;
+
+    ol {
+      list-style: lower-alpha;
+
+      ol {
+        list-style: lower-roman;
+      }
+    }
+  }
+
+  ul:not([data-type="taskList"]) {
+    list-style: disc;
+
+    ul {
+      list-style: circle;
+
+      ul {
+        list-style: disc;
+      }
+    }
+  }
+
+  // Task lists (rendu statique)
+  ul[data-type="taskList"] {
+    padding-left: 0.25em; // Garde l'indentation
+
+    li {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+
+      &:not(:has(> p:first-child)) {
+        list-style-type: none; // Cache le point de liste si pas de paragraphe
+      }
+
+      // Masque les checkboxes HTML et simule leur apparence avec du CSS
+      label {
+        position: relative;
+        padding-top: 4px;
+        padding-right: 8px;
+
+        input[type="checkbox"] {
+          display: none; // Cache la checkbox réelle
+        }
+
+        span {
+          display: block;
+          width: 1em;
+          height: 1em;
+          border: 1px solid var(--tt-checklist-border-color);
+          border-radius: var(--tt-radius-xs, 0.25rem);
+          background-color: var(--tt-checklist-bg-color);
+          position: relative;
+          // Pas de cursor: pointer ici car non interactif
+          transition: background-color 80ms ease-out, border-color 80ms ease-out;
+
+          &::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 0.75em;
+            height: 0.75em;
+            background-color: var(--tt-checklist-check-icon-color);
+            opacity: 0;
+            // Utilise un SVG direct ou un caractère pour la coche
+            -webkit-mask: url("data:image/svg+xml,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22currentColor%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M21.4142%204.58579C22.1953%205.36683%2022.1953%206.63317%2021.4142%207.41421L10.4142%2018.4142C9.63317%2019.1953%208.36684%2019.1953%207.58579%2018.4142L2.58579%2013.4142C1.80474%2012.6332%201.80474%2011.3668%202.58579%2010.5858C3.36683%209.80474%204.63317%209.80474%205.41421%2010.5858L9%2014.1716L18.5858%204.58579C19.3668%203.80474%2020.6332%203.80474%2021.4142%204.58579Z%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E")
+              center/contain no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22currentColor%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M21.4142%204.58579C22.1953%205.36683%2022.1953%206.63317%2021.4142%207.41421L10.4142%2018.4142C9.63317%2019.1953%208.36684%2019.1953%207.58579%2018.4142L2.58579%2013.4142C1.80474%2012.6332%201.80474%2011.3668%202.58579%2010.5858C3.36683%209.80474%204.63317%209.80474%205.41421%2010.5858L9%2014.1716L18.5858%204.58579C19.3668%203.80474%2020.6332%203.80474%2021.4142%204.58579Z%22%20fill%3D%22currentColor%22%2F%3E%3C%2Fsvg%3E")
+              center/contain no-repeat;
+          }
+        }
+      }
+
+      &[data-checked="true"] {
+        > div > p {
+          opacity: 0.5;
+          text-decoration: line-through;
+        }
+
+        > div > p span {
+          text-decoration: line-through; // Pour les spans à l'intérieur des paragraphes
+        }
+
+        label span {
+          background: var(--tt-checklist-bg-active-color);
+          border-color: var(--tt-checklist-border-active-color);
+          &::before {
+            opacity: 1;
+          }
+        }
+      }
+
+      div {
+        flex: 1 1 0%;
+        min-width: 0;
+      }
+    }
+  }
+
+  // INLINE CODE
+  code {
+    background-color: var(--tt-inline-code-bg-color);
+    color: var(--tt-inline-code-text-color);
+    border: 1px solid var(--tt-inline-code-border-color);
+    font-family: "JetBrains Mono NL", monospace;
+    font-size: 0.875em;
+    line-height: 1.4;
+    border-radius: 6px/0.375rem;
+    padding: 0.1em 0.2em;
+  }
+
+  // CODE BLOCKS
+  pre {
+    background-color: var(--tt-codeblock-bg);
+    color: var(--tt-codeblock-text);
+    border: 1px solid var(--tt-codeblock-border);
+    margin-top: 1.5em;
+    margin-bottom: 1.5em;
+    padding: 1em;
+    font-size: 1rem;
+    border-radius: 6px/0.375rem;
+    overflow-x: auto; // Ajouté pour le défilement horizontal des blocs de code
+
+    code {
+      background-color: transparent;
+      border: none;
+      border-radius: 0;
+      -webkit-text-fill-color: inherit;
+      color: inherit;
+      display: block; // Pour que le code à l'intérieur de pre prenne toute la largeur
+      white-space: pre-wrap; // Pour la préservation des espaces
+    }
+  }
+
+  // BLOCKQUOTE
+  blockquote {
+    position: relative;
+    padding-left: 1em;
+    padding-top: 0.375em;
+    padding-bottom: 0.375em;
+    margin: 1.5rem 0;
+
+    p {
+      margin-top: 0;
+    }
+
+    &::before {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 0.25em;
+      background-color: var(--blockquote-bg-color);
+      content: "";
+      border-radius: 0;
+    }
+  }
+
+  // HORIZONTAL RULE (Séparateur)
+  hr {
+    margin-top: 3em;
+    margin-bottom: 3em;
+    border: none;
+    height: 1px;
+    background-color: var(--separator-color);
+  }
+
+  // LINKS
+  a {
+    color: var(--link-text-color);
+    text-decoration: underline;
+
+    span {
+      text-decoration: underline; // Pour les spans à l'intérieur des liens
+    }
+  }
+
+  // TEXT DECORATION (Strike-through, Underline)
+  s span {
+    text-decoration: line-through;
+  }
+
+  u span {
+    text-decoration: underline;
+  }
+
+  // IMAGES
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  & > img:not([data-type="emoji"] img) {
+    margin: 2rem 0;
+    outline: 0.125rem solid transparent;
+    border-radius: var(--tt-radius-xs, 0.25rem);
+  }
+
+  // EMOJI (si tu utilises le nœud emoji)
+  [data-type="emoji"] img {
+    display: inline-block;
+    width: 1.25em;
+    height: 1.25em;
+    vertical-align: middle; // Pour aligner avec le texte
+  }
+
+  // MENTION (si tu utilises le nœud mention)
+  [data-type="mention"] {
+    display: inline-block;
+    color: var(--link-text-color); // Utilise la couleur des liens ou une autre
+    font-weight: 500;
+  }
+
+  // THREADS (rendu statique, si tu veux les afficher)
+  .tiptap-thread.tiptap-thread--unresolved.tiptap-thread--inline {
+    color: inherit;
+    border-bottom: 2px dashed orange; // Exemple de style pour les threads non résolus
+    font-weight: 600;
+  }
+
+  .tiptap-thread.tiptap-thread--resolved.tiptap-thread--inline {
+    opacity: 0.7; // Exemple de style pour les threads résolus
+    text-decoration: line-through;
+  }
+
+  .tiptap-thread.tiptap-thread--block:has(img) {
+    outline: 0.125rem solid orange;
+    border-radius: var(--tt-radius-xs, 0.25rem);
+    overflow: hidden;
+    width: fit-content;
+    margin: 2rem 0;
+  }
+
+  .tiptap-thread.tiptap-thread--block:not(:has(img)) {
+    border-radius: 0.25rem;
+    border-bottom: 0.125rem dashed orange;
+    padding-bottom: 0.5rem;
+    margin: 1.5rem 0;
+  }
+
+  // MATHEMATICS (si tu utilises le nœud mathematics)
+  .Tiptap-mathematics-render {
+    padding: 0 0.25rem;
+    border-radius: var(--tt-radius-xs);
+    display: inline-block;
+    background: #f0f0f0; // Couleur de fond pour les formules
+    border: 1px solid #007bff; // Bordure pour les formules
+    .dark & {
+      background: #2a2a2a;
+      border: 1px solid #69c0ff;
+    }
+  }
+
+  // Placeholder (pas vraiment nécessaire pour le rendu statique, mais si le HTML le génère)
+  .is-empty[data-placeholder]::before {
+    content: ""; // Cache le placeholder
+    display: none;
+  }
+}

@@ -13,6 +13,7 @@ import {
   UserIcon,
 } from "lucide-react";
 
+
 interface PostCardProps {
   post: Post;
 }
@@ -26,8 +27,6 @@ export default function PostCard({ post }: PostCardProps) {
       year: "numeric",
     });
   };
-
-  // console.log("poost at line - 30: ", post);
 
   const [hoverBox, setHoverBox] = useState(false);
 
@@ -82,7 +81,10 @@ export default function PostCard({ post }: PostCardProps) {
           {post.title}
         </h3>
 
-        <p className="text-gray-600 mb-4 line-clamp-2">{post.content}</p>
+        <div
+          className="text-gray-600 mb-4 line-clamp-2"
+          dangerouslySetInnerHTML={{ __html: post.content }}
+        ></div>
 
         {post?.tags && post?.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">

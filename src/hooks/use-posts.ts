@@ -93,6 +93,7 @@ export function usePostByTagsQuery(slug: string) {
 
 export function useCreatePostMutation() {
   const { show } = useNotification();
+  const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -113,6 +114,7 @@ export function useCreatePostMutation() {
     onSuccess: (data) => {
       show("success", data.message || "Article créer avec succès");
       queryClient.invalidateQueries({ queryKey: ["posts"] });
+      router.push("/dashboard/posts");
     },
     onError: (error) => {
       show("error", error.message || "Erreur lors de la création de l'article");

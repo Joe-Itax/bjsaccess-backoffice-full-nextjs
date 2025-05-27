@@ -1,62 +1,60 @@
-
 "use client";
 
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { PlusIcon } from "lucide-react";
-import { useCreatePostMutation } from "@/hooks/use-posts";
+import { MoveLeftIcon } from "lucide-react";
+import {
+  useCategoriesQuery,
+  useCreatePostMutation,
+  useTagsQuery,
+} from "@/hooks/use-posts";
 import { Category, Tag } from "@/types/posts";
 import Spinner from "@/components/spinner";
-import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor"; // Import the SimpleEditor
+import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
+import { useRouter } from "next/navigation";
 
 type PostFormData = {
   title: string;
-  content: string; // The content will now come from Tiptap
+  content: string;
   categoryId: string;
   tags: string[];
   featuredImage: File | null;
 };
+type PostFormErrors = {
+  [K in keyof PostFormData]?: string;
+};
 
-export default function CreatePost({
-  categories,
-  tags,
-}: {
-  categories: Category[];
-  tags: Tag[];
-}) {
-  const [openDialog, setOpenDialog] = useState(false);
+export default function CreatePost() {
+  const { data: categories = [], isPending: catIsPending } =
+    useCategoriesQuery();
+  const { data: tags = [], isPending: tagIsPending } = useTagsQuery();
+  const router = useRouter();
   const [formData, setFormData] = useState<PostFormData>({
     title: "",
-    content: "", // Initialize content as empty
+    content: "",
     categoryId: "",
     tags: [],
     featuredImage: null,
   });
-  const [errors, setErrors] = useState<Partial<PostFormData>>({});
+  const [errors, setErrors] = useState<PostFormErrors>({});
   const { mutateAsync: createPost, isPending } = useCreatePostMutation();
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<PostFormData> = {};
+    // const newErrors: Partial<PostFormData> = {};
+    const newErrors: PostFormErrors = {};
     if (!formData.title.trim()) newErrors.title = "Le titre est requis";
-    // Check if the content is not empty (Tiptap will return HTML, so trim is still good)
     if (!formData.content.trim() || formData.content === "<p></p>")
       newErrors.content = "Le contenu est requis";
     if (!formData.categoryId) newErrors.categoryId = "Catégorie requise";
+    if (!formData.featuredImage) {
+      newErrors.featuredImage = "L'image à la une est requise";
+    }
     if (
       formData.featuredImage &&
       formData.featuredImage.size > 5 * 1024 * 1024
     ) {
-      newErrors.featuredImage = null; // Set to null to indicate an error for the file input
-      alert("L'image ne doit pas dépasser 5 Mo");
+      newErrors.featuredImage = "L'image ne doit pas dépasser 5 Mo";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -75,19 +73,17 @@ export default function CreatePost({
     }
 
     try {
-      return console.log("form to send: ", form);
+      // return console.log("form to send: ", form);
       await createPost(form);
       setFormData({
         title: "",
-        content: "", // Reset content
+        content: "",
         categoryId: "",
         tags: [],
         featuredImage: null,
       });
     } catch (err) {
       console.error(err);
-    } finally {
-      setOpenDialog(false);
     }
   };
 
@@ -125,20 +121,25 @@ export default function CreatePost({
     setErrors((prev) => ({ ...prev, featuredImage: undefined }));
   };
 
-  return (
-    <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-      <DialogTrigger asChild>
-        <Button className="ml-auto" variant="outline">
-          <PlusIcon className="-ms-1 opacity-60" size={16} />
-          Ajouter un post
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-xl">
-        <DialogHeader className="border-b px-6 py-4">
-          <DialogTitle>Créer un nouveau post</DialogTitle>
-        </DialogHeader>
+  if (catIsPending || tagIsPending) {
+    return (
+      <div className="w-full py-64 flex justify-center items-center">
+        <div className="flex gap-4 items-center">
+          Chargement... <Spinner />
+        </div>
+      </div>
+    );
+  }
 
-        <div className="space-y-4 px-6 py-4">
+  return (
+    <section className="container size-full mx-auto flex justify-center">
+      <div className="px-4 md:p-8 sm:px-4 size-full">
+        <Button variant="ghost" onClick={() => router.back()}>
+          <MoveLeftIcon />
+        </Button>
+        <h1 className="ml-0 mb-4 text-2xl font-bold">Créer un nouveau post</h1>
+
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Titre *</Label>
             <input
@@ -157,7 +158,7 @@ export default function CreatePost({
           <div className="space-y-2">
             <Label htmlFor="content">Contenu *</Label>
             {/* REMOVED: <textarea ... /> */}
-            <div className="w-96">
+            <div className="w-full">
               <SimpleEditor
                 initialContent={formData.content} // Pass current formData.content as initial content
                 onContentChange={handleEditorChange} // Capture changes from the editor
@@ -223,7 +224,7 @@ export default function CreatePost({
             <input
               type="file"
               accept="image/*"
-              required // Consider if this should always be required or if you want it optional
+              required
               onChange={handleFileChange}
               className={`w-full border p-2 rounded cursor-pointer ${
                 errors.featuredImage ? "border-red-500" : "border-gray-300"
@@ -238,15 +239,12 @@ export default function CreatePost({
         </div>
 
         <div className="border-t px-6 py-4 flex justify-end gap-2">
-          <DialogClose asChild>
-            <Button variant="outline">Annuler</Button>
-          </DialogClose>
           <Button onClick={handleSubmit} disabled={isPending}>
             {isPending ? "Création..." : "Créer le post"}
             {isPending && <Spinner />}
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </section>
   );
 }
