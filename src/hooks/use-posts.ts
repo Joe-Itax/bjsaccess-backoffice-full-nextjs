@@ -196,8 +196,8 @@ export function useDeletePostMutation() {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async (postId: string) => {
-      const res = await fetch(`/api/post/${postId}`, {
+    mutationFn: async (postSlug: string) => {
+      const res = await fetch(`/api/post/${postSlug}`, {
         method: "DELETE",
       });
 

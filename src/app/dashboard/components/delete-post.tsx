@@ -27,9 +27,7 @@ export default function DeletePost({ post }: DeleteUserProps) {
 
   const handleDeletePost = async () => {
     try {
-      if (post?.id) {
-        await deletePostMutation.mutateAsync(post.id);
-      }
+      await deletePostMutation.mutateAsync(post.slug);
     } catch (error) {
       console.error(error);
     } finally {

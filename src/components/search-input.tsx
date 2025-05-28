@@ -28,7 +28,7 @@ interface UserSearchResult {
 }
 
 interface PostSearchResult {
-  id: string;
+  slug: string;
   title: string;
   createdAt: string;
 }
@@ -71,13 +71,13 @@ export default function SearchInput() {
         const url = `/api/admin/search${
           debouncedSearchTerm ? `?q=${debouncedSearchTerm}` : ""
         }`;
-        console.log("Fetching from URL:", url);
+        // console.log("Fetching from URL:", url);
         const res = await fetch(url);
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
         const data: SearchResults = await res.json();
-        console.log("API Response data:", data);
+        // console.log("API Response data:", data);
         setSearchResults(data);
       } catch (error) {
         console.error("Failed to fetch search results:", error);
@@ -215,8 +215,8 @@ export default function SearchInput() {
             <CommandGroup heading="Articles">
               {searchResults.posts.map((post) => (
                 <CommandItem
-                  key={post.id}
-                  onSelect={() => handleNavigate(`/dashboard/posts/${post.id}`)}
+                  key={post.slug}
+                  onSelect={() => handleNavigate(`/dashboard/posts/${post.slug}`)}
                   value={post.title.toLowerCase()}
                 >
                   <FileTextIcon
