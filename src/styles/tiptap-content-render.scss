@@ -414,9 +414,9 @@
     display: inline-flex;
     align-items: center;
     color: var(--tag-text-color, #193cb8);
-    background-color: var(--tag-bg-color, #dbeafe);
+    // background-color: var(--tag-bg-color, #dbeafe);
     font-weight: 500;
-    border-radius: calc(infinity * 1px);
+    // border-radius: calc(infinity * 1px);
     font-style: normal;
     white-space: nowrap;
     padding: 4px 12px;
@@ -427,3 +427,4 @@
     }
   }
 }
+// npx @better-auth/cli@latest generate
