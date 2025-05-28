@@ -8,17 +8,24 @@ import { requireRole } from "@/lib/middlewares/require-role";
  * @route PUT /api/post/:postId/comments/:commentId
  * @description Moderate a comment (approve/reject)
  */
+interface PutContext {
+  params: {
+    postSlug: string;
+    commentId: string;
+  };
+}
+
 export async function PUT(
-  req: NextRequest,
-  context: { params: { postSlug: string; commentId: string } }
-) {
+  request: NextRequest,
+  { params }: PutContext
+): Promise<NextResponse> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
   }
 
-  const { commentId } = context.params;
-  const { action } = await req.json(); // "approve" or "reject"
+  const { commentId } = params;
+  const { action } = await request.json();
 
   if (action !== "approve" && action !== "reject") {
     return NextResponse.json(
@@ -28,7 +35,6 @@ export async function PUT(
   }
 
   try {
-    // Check if the comment exists
     const comment = await prisma.comment.findUnique({
       where: { id: commentId },
     });
@@ -61,7 +67,6 @@ export async function PUT(
       typeof error === "object" &&
       error !== null &&
       "code" in error &&
-      typeof (error as { code: unknown }).code === "string" &&
       (error as { code: string }).code === "P2025"
     ) {
       return NextResponse.json(
