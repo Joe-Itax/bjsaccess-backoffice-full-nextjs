@@ -4,6 +4,8 @@ import { Prisma, prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { paginationQuery } from "@/utils/pagination";
 
+export const dynamic = "force-dynamic"; // Important pour Vercel
+
 /**
  * @route GET /api/post/:id/comments
  * @description Get comments for a specific post with pagination
