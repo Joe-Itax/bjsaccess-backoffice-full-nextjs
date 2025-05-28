@@ -10,12 +10,14 @@ import { requireRole } from "@/lib/middlewares/require-role";
  */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { postSlug: string; commentId: string } }
+  context: { params: { postSlug: string; commentId: string } }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user)
+  if (!session?.user) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
-  const { commentId } = params;
+  }
+
+  const { commentId } = context.params;
   const { action } = await req.json(); // "approve" or "reject"
 
   if (action !== "approve" && action !== "reject") {
@@ -47,9 +49,7 @@ export async function PUT(
 
     return NextResponse.json(
       {
-        message: `Commentaire ${
-          action === "approve" ? "approver" : "rejeter"
-        }.`,
+        message: `Commentaire ${action === "approve" ? "approuvé" : "rejeté"}.`,
         comment: updatedComment,
       },
       { status: 200 }
@@ -57,7 +57,6 @@ export async function PUT(
   } catch (error) {
     console.error("Error moderating comment:", error);
 
-    // Robust error handling for Prisma "Record not found" (P2025)
     if (
       typeof error === "object" &&
       error !== null &&
