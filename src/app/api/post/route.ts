@@ -6,8 +6,10 @@ import { paginationQuery } from "@/utils/pagination";
 import { generateUniqueSlug } from "@/utils/generate-unique-slug";
 
 import { removeAccents } from "@/utils/user-utils";
-import { handleUpload } from "@/lib/middlewares/upload-file";
-import fs from "fs";
+import {
+  handleUpload,
+  deleteFileFromVercelBlob,
+} from "@/lib/middlewares/upload-file";
 
 export const config = {
   api: {
@@ -135,228 +137,141 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
   }
 
-  let tempImagePath: string | null = null;
-
   try {
     const formData = await req.formData();
-    const title = formData.get("title") as string;
-    let content = formData.get("content") as string;
-    const categoryId = formData.get("categoryId") as string;
-    const authorId = session?.user.id as string;
-    const featuredImageFile = formData.get("featuredImage") as Blob | null;
 
-    // --- Validation des champs obligatoires ---
-    if (!title || !content || !categoryId || !featuredImageFile) {
-      const missingFields = [];
-      if (!title) missingFields.push("title");
-      if (!content) missingFields.push("content");
-      if (!categoryId) missingFields.push("categoryId");
-      if (!featuredImageFile) missingFields.push("featuredImage");
+    // Validation des champs obligatoires
+    const requiredFields = ["title", "content", "categoryId", "featuredImage"];
+    const missingFields = requiredFields.filter(
+      (field) => !formData.get(field)
+    );
 
+    if (missingFields.length > 0) {
       return NextResponse.json(
         {
-          message:
-            "Tous les champs obligatoires (titre, contenu, catégorie, image à la une) doivent être fournis.",
+          message: "Champs obligatoires manquants",
           requiredFields: missingFields,
         },
         { status: 400 }
       );
     }
 
-    // --- Validation de la taille de l'image (backend check pour la sécurité) ---
-    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB en octets
-    if (featuredImageFile.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { message: "L'image à la une ne doit pas dépasser 5 Mo." },
-        { status: 400 }
-      );
-    }
+    const title = formData.get("title") as string;
+    const content = formData.get("content") as string;
+    const categoryId = formData.get("categoryId") as string;
+    const featuredImageFile = formData.get("featuredImage") as Blob;
 
-    // --- Reject extra fields ---
-    const allowedFields = new Set([
-      "title",
-      "content",
-      "categoryId",
-      "featuredImage",
-    ]);
-    for (const key of formData.keys()) {
-      if (!allowedFields.has(key)) {
-        return NextResponse.json(
-          { message: `Champ non autorisé détecté: ${key}` },
-          { status: 400 }
-        );
-      }
-    }
-
-    // --- Extraction, création et stylisation des tags à partir du contenu HTML ---
-    const extractedTags = new Set<string>(); // Utilisation de Set pour éviter les doublons
-    const hashtagRegex = /#(\w+)/g; // Capture le mot après '#'
-
-    // Utilise une copie temporaire pour la regex pour éviter les problèmes avec `lastIndex`
-    const tempContentForRegex = content;
-    let match;
-    while ((match = hashtagRegex.exec(tempContentForRegex)) !== null) {
-      // Pour éviter des boucles infinies sur des regex malformées ou du contenu très grand
-      if (match.index === hashtagRegex.lastIndex) {
-        hashtagRegex.lastIndex++;
-      }
-      extractedTags.add(match[1]); // Ajoute le mot sans le '#'
-    }
-
-    const finalTagIds: string[] = [];
-
-    // Créer ou récupérer les IDs des tags extraits
-    for (const tagName of extractedTags) {
-      let tag = await prisma.tag.findUnique({
-        where: { name: tagName },
-      });
-
-      if (!tag) {
-        tag = await prisma.tag.create({
-          data: { name: tagName, slug: removeAccents(tagName) },
-        });
-      }
-      finalTagIds.push(tag.id);
-    }
-
-    // Remplacer les occurrences de tags par la balise span stylisée
-    for (const tagName of extractedTags) {
-      // Crée une regex pour chaque tag, sensible à la casse, et ne remplace que les occurrences de #tag
-      const replaceRegex = new RegExp(`#(${tagName})\\b`, "g"); // \b pour une limite de mot
-      content = content.replace(
-        replaceRegex,
-        `<span class="tiptap-tag">#$1</span>`
-      );
-    }
-
-    let featuredImagePath: string | null = null;
+    // 1. Traitement de l'image
+    const slug = await generateUniqueSlug(title, "post");
+    const prefix = `featured-${Date.now()}-${slug}`;
+    const featuredImagePath = await handleUpload({
+      file: featuredImageFile,
+      folder: "featured-images",
+      filenamePrefix: prefix,
+    });
 
     try {
-      const post = await prisma.$transaction(async (tx) => {
-        const category = await tx.category.findUnique({
-          where: { id: categoryId },
-        });
-        if (!category) {
-          throw new Error("Catégorie non trouvée.");
+      // 2. Extraction des tags
+      const extractedTags = new Set<string>();
+      const hashtagRegex = /#(\w+)/g;
+      let match;
+      while ((match = hashtagRegex.exec(content)) !== null) {
+        extractedTags.add(match[1]);
+      }
+
+      // 3. Recherche/création des tags
+      const tagOperations = [];
+      for (const tagName of extractedTags) {
+        tagOperations.push(
+          prisma.tag.upsert({
+            where: { name: tagName },
+            create: {
+              name: tagName,
+              slug: removeAccents(tagName),
+            },
+            update: {},
+          })
+        );
+      }
+      const tags = await Promise.all(tagOperations);
+      const finalTagIds = tags.map((tag) => tag.id);
+
+      // 4. Formatage du contenu avec les tags
+      let formattedContent = content;
+      for (const tag of tags) {
+        const replaceRegex = new RegExp(`#(${tag.name})\\b`, "g");
+        formattedContent = formattedContent.replace(
+          replaceRegex,
+          `<span class="tiptap-tag">#$1</span>`
+        );
+      }
+
+      // 5. Création du post avec timeout étendu
+      const post = await prisma.$transaction(
+        async (tx) => {
+          // Vérification de la catégorie
+          const categoryExists = await tx.category.count({
+            where: { id: categoryId },
+          });
+          if (!categoryExists) {
+            throw new Error("Catégorie non trouvée.");
+          }
+
+          // Création du post
+          return await tx.post.create({
+            data: {
+              title,
+              searchableTitle: removeAccents(title),
+              slug,
+              content: formattedContent,
+              authorId: session.user.id,
+              categoryId,
+              featuredImage: featuredImagePath,
+              tags: {
+                create: finalTagIds.map((tagId) => ({ tagId })),
+              },
+            },
+            include: {
+              category: true,
+              tags: { include: { tag: true } },
+              author: { select: { id: true, name: true, image: true } },
+            },
+          });
+        },
+        {
+          maxWait: 10000, // Temps max d'attente (10s)
+          timeout: 10000, // Timeout de la transaction (10s)
         }
-
-        const slug = await generateUniqueSlug(title, "post");
-        const searchableTitle = removeAccents(title);
-
-        const postCreated = await tx.post.create({
-          data: {
-            title,
-            searchableTitle,
-            slug,
-            content,
-            authorId,
-            categoryId,
-            tags: {
-              create: finalTagIds.map((tagId) => ({ tagId })),
-            },
-          },
-          include: {
-            category: true,
-            tags: { include: { tag: true } },
-            author: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
-            },
-          },
-        });
-
-        const prefix = `featured-${postCreated.id}-${slug}`;
-        featuredImagePath = await handleUpload({
-          file: featuredImageFile,
-          folder: "featured-images",
-          filenamePrefix: prefix,
-        });
-        tempImagePath = featuredImagePath;
-
-        return await tx.post.update({
-          where: { id: postCreated.id },
-          data: { featuredImage: featuredImagePath },
-          include: {
-            category: true,
-            tags: { include: { tag: true } },
-            author: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
-            },
-          },
-        });
-      });
+      );
 
       return NextResponse.json(
         { message: "Article créé avec succès.", post },
         { status: 201 }
       );
-    } catch (transactionError) {
-      if (tempImagePath) {
-        try {
-          fs.unlinkSync(tempImagePath);
-          console.log(
-            "Cleaned up uploaded image due to transaction error:",
-            tempImagePath
-          );
-        } catch (unlinkError) {
-          console.error("Failed to delete temporary image:", unlinkError);
-        }
-      }
-      throw transactionError;
+    } catch (error) {
+      // Nettoyage de l'image en cas d'erreur
+      await deleteFileFromVercelBlob(featuredImagePath).catch(console.error);
+      throw error;
     }
   } catch (error) {
-    console.error("Error creating post:", error);
+    console.error("Erreur création article:", error);
 
-    if (tempImagePath) {
-      try {
-        fs.unlinkSync(tempImagePath);
-        console.log(
-          "Cleaned up uploaded image from initial upload due to error:",
-          tempImagePath
-        );
-      } catch (unlinkError) {
-        console.error("Failed to delete temporary image:", unlinkError);
+    if (error instanceof Error) {
+      if (error.message.includes("Catégorie")) {
+        return NextResponse.json({ message: error.message }, { status: 400 });
       }
-    }
-
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      typeof (error as { code: unknown }).code === "string"
-    ) {
-      if ((error as { code: string }).code === "P2002") {
+      if (error.message.includes("unique constraint")) {
         return NextResponse.json(
-          { message: "Un article avec ce titre/slug existe déjà." },
+          { message: "Un article avec ce titre existe déjà." },
           { status: 409 }
         );
       }
     }
 
-    if (error instanceof Error) {
-      if (error.message === "Catégorie non trouvée.") {
-        return NextResponse.json({ message: error.message }, { status: 400 });
-      }
-      return NextResponse.json(
-        {
-          message: "Erreur lors de la création d'un article.",
-          error: error.message,
-        },
-        { status: 500 }
-      );
-    }
-
     return NextResponse.json(
       {
-        message:
-          "Une erreur inconnue est survenue lors de la création de l'article. Veuillez réessayer plus tard.",
+        message: "Erreur lors de la création",
+        error: error instanceof Error ? error.message : "Erreur inconnue",
       },
       { status: 500 }
     );

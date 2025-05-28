@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
-import fs from "fs";
-import path from "path";
 import { prisma, Prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { removeAccents } from "@/utils/user-utils";
-import { handleUpload } from "@/lib/middlewares/upload-file";
+import {
+  handleUpload,
+  deleteFileFromVercelBlob,
+} from "@/lib/middlewares/upload-file";
 import { generateUniqueSlug } from "@/utils/generate-unique-slug";
 
-export const dynamic = "force-dynamic"; // Important pour Vercel
+export const dynamic = "force-dynamic";
 
 /**
  * @route GET /api/post/:slug
@@ -117,14 +118,14 @@ export async function GET(
  * @route PUT /api/post/:id
  * @description Update a post by ID
  */
-
 export async function PUT(
   req: NextRequest,
   context: { params: Promise<{ postSlug: string }> }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user)
+  if (!session?.user) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+  }
 
   const { postSlug } = await context.params;
 
@@ -140,7 +141,6 @@ export async function PUT(
       : undefined;
     const featuredImageFile = formData.get("featuredImage") as Blob | null;
 
-    // Reject extra fields
     const allowedFields = new Set([
       "title",
       "content",
@@ -161,17 +161,15 @@ export async function PUT(
     let oldImagePathToDelete: string | null = null;
 
     const updatedPost = await prisma.$transaction(async (tx) => {
-      // 1. Check if post exists and user has permission
       const existingPost = await tx.post.findUnique({
         where: { slug: postSlug },
-        include: { author: true, tags: true }, // Include tags for cleanup
+        include: { author: true, tags: true },
       });
 
       if (!existingPost) {
         throw new Error("Article non trouvé");
       }
 
-      // 2. Check category if provided
       if (categoryId) {
         const category = await tx.category.findUnique({
           where: { id: categoryId },
@@ -181,13 +179,11 @@ export async function PUT(
         }
       }
 
-      // 3. Extraction, création et stylisation des tags à partir du contenu HTML (si le contenu a changé)
       let finalTagIds: string[] = [];
       if (content && content !== existingPost.content) {
         const extractedTags = new Set<string>();
         const hashtagRegex = /#(\w+)/g;
 
-        // Utilise une copie temporaire pour la regex pour éviter les problèmes avec `lastIndex`
         const tempContentForRegex = content;
         let match;
         while ((match = hashtagRegex.exec(tempContentForRegex)) !== null) {
@@ -197,7 +193,6 @@ export async function PUT(
           extractedTags.add(match[1]);
         }
 
-        // Créer ou récupérer les IDs des tags extraits
         for (const tagName of extractedTags) {
           let tag = await tx.tag.findUnique({
             where: { name: tagName },
@@ -211,7 +206,6 @@ export async function PUT(
           finalTagIds.push(tag.id);
         }
 
-        // Remplacer les occurrences de tags par la balise span stylisée
         for (const tagName of extractedTags) {
           const replaceRegex = new RegExp(`#(${tagName})\\b`, "g");
           content = content.replace(
@@ -220,11 +214,9 @@ export async function PUT(
           );
         }
       } else {
-        // If content hasn't changed, retain existing tags in the database
         finalTagIds = existingPost.tags.map((t) => t.tagId);
       }
 
-      // 4. Generate new slug if title changes
       let newSlug = existingPost.slug;
       let newSearchableTitle = existingPost.searchableTitle;
       if (title && title !== existingPost.title) {
@@ -232,14 +224,9 @@ export async function PUT(
         newSearchableTitle = removeAccents(title);
       }
 
-      // 5. Handle featured image update
       if (featuredImageFile && featuredImageFile.size > 0) {
         if (existingPost.featuredImage) {
-          oldImagePathToDelete = path.join(
-            process.cwd(),
-            "public",
-            existingPost.featuredImage
-          );
+          oldImagePathToDelete = existingPost.featuredImage;
         }
         const prefix = `featured-${existingPost.id}-${
           newSlug || existingPost.slug
@@ -249,10 +236,9 @@ export async function PUT(
           folder: "featured-images",
           filenamePrefix: prefix,
         });
-        tempImagePath = featuredImagePath; // For cleanup if transaction fails
+        tempImagePath = featuredImagePath;
       }
 
-      // Prepare update data
       const updateData: Prisma.PostUpdateInput = {
         title: title ?? existingPost.title,
         slug: newSlug,
@@ -263,7 +249,6 @@ export async function PUT(
         featuredImage: featuredImagePath ?? existingPost.featuredImage,
       };
 
-      // Update tags association: delete existing and create new ones based on finalTagIds
       await tx.tagsOnPosts.deleteMany({
         where: { postId: existingPost.id },
       });
@@ -291,14 +276,14 @@ export async function PUT(
       });
     });
 
-    // Delete old image file AFTER successful transaction
     if (oldImagePathToDelete) {
-      // Check if a path was actually set
       try {
-        fs.unlinkSync(oldImagePathToDelete);
-        console.log("Old featured image deleted:", oldImagePathToDelete);
+        await deleteFileFromVercelBlob(oldImagePathToDelete);
       } catch (unlinkError) {
-        console.error("Error deleting old featured image:", unlinkError);
+        console.error(
+          "Erreur lors de la suppression de l'ancienne image à la une:",
+          unlinkError
+        );
       }
     }
 
@@ -309,30 +294,19 @@ export async function PUT(
 
     return NextResponse.json({ post: responsePost }, { status: 200 });
   } catch (error) {
-    console.error("Error updating post:", error);
+    console.error("Erreur lors de la mise à jour de l'article:", error);
 
-    // If an error occurred within the transaction or upload, delete the newly uploaded image
     if (tempImagePath) {
-      const fullTempImagePath = path.join(
-        process.cwd(),
-        "public",
-        tempImagePath
-      );
       try {
-        fs.unlinkSync(fullTempImagePath);
-        console.log(
-          "Cleaned up new uploaded image due to update error:",
-          fullTempImagePath
-        );
+        await deleteFileFromVercelBlob(tempImagePath);
       } catch (unlinkError) {
         console.error(
-          "Failed to delete temporary image after update error:",
+          "Échec de la suppression de l'image temporaire après erreur de mise à jour:",
           unlinkError
         );
       }
     }
 
-    // Robust error handling for Prisma unique constraint violation (P2002) or other specific errors
     if (
       typeof error === "object" &&
       error !== null &&
@@ -346,7 +320,6 @@ export async function PUT(
         );
       }
       if ((error as { code: string }).code === "P2025") {
-        // Record not found
         return NextResponse.json(
           { message: "Article non trouvé ou n'a pas pu être mis à jour." },
           { status: 404 }
@@ -354,7 +327,6 @@ export async function PUT(
       }
     }
 
-    // Handle custom thrown errors (e.g., "Post not found", "Unauthorized", "Category not found", "Tags invalid")
     if (error instanceof Error) {
       if (
         [
@@ -373,7 +345,6 @@ export async function PUT(
           { status: status }
         );
       }
-      // General error
       return NextResponse.json(
         {
           message: "Erreur lors de la mise à jour de l'article.",
@@ -383,7 +354,6 @@ export async function PUT(
       );
     }
 
-    // Fallback for unknown errors
     return NextResponse.json(
       {
         message:
@@ -403,16 +373,15 @@ export async function DELETE(
   context: { params: Promise<{ postSlug: string }> }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user)
+  if (!session?.user) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+  }
 
   const { postSlug } = await context.params;
-
   const authenticatedUser = session.user;
 
   try {
     await prisma.$transaction(async (tx) => {
-      // 1. Check if post exists and user has permission
       const post = await tx.post.findUnique({
         where: { slug: postSlug },
         include: { author: true },
@@ -428,28 +397,19 @@ export async function DELETE(
         throw new Error("Vous n'êtes pas autorisé à éffectué cette action.");
       }
 
-      // 2. Delete the featured image if it exists
-      const featuredPath = path.join(
-        process.cwd(),
-        "public",
-        post.featuredImage as string
-      );
-      if (featuredPath && fs.existsSync(featuredPath)) {
+      if (post.featuredImage) {
         try {
-          fs.unlinkSync(featuredPath);
-          console.log("Featured image deleted:", featuredPath);
+          await deleteFileFromVercelBlob(post.featuredImage);
         } catch (unlinkError) {
-          console.error("Error deleting featured image:", unlinkError);
+          console.error(
+            "Erreur lors de la suppression de l'image à la une:",
+            unlinkError
+          );
         }
       }
 
-      // 3. Delete related comments
       await tx.comment.deleteMany({ where: { postId: post.id } });
-
-      // 4. Delete tag relationships
       await tx.tagsOnPosts.deleteMany({ where: { postId: post.id } });
-
-      // 5. Finally, delete the post
       await tx.post.delete({ where: { slug: postSlug } });
     });
 
@@ -458,9 +418,8 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error deleting post:", error);
+    console.error("Erreur lors de la suppression de l'article:", error);
 
-    // Robust error handling for Prisma "Record not found" (P2025)
     if (
       typeof error === "object" &&
       error !== null &&
@@ -474,7 +433,6 @@ export async function DELETE(
       );
     }
 
-    // Handle custom thrown errors (e.g., "Post not found", "Unauthorized")
     if (error instanceof Error) {
       if (error.message === "Post not found") {
         return NextResponse.json({ message: error.message }, { status: 404 });
@@ -482,7 +440,6 @@ export async function DELETE(
       if (error.message === "Unauthorized to delete this post") {
         return NextResponse.json({ message: error.message }, { status: 403 });
       }
-      // General error
       return NextResponse.json(
         {
           message: error.message || "Erreur lors de la suppresion de l'article",
@@ -491,7 +448,6 @@ export async function DELETE(
       );
     }
 
-    // Fallback for unknown errors
     return NextResponse.json(
       { message: "An unknown error occurred while deleting the post." },
       { status: 500 }

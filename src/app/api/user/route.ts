@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { handleUpload } from "@/lib/middlewares/upload-file";
+import {
+  deleteFileFromVercelBlob,
+  handleUpload,
+} from "@/lib/middlewares/upload-file";
 import { requireRole } from "@/lib/middlewares/require-role";
 import { removeAccents } from "@/utils/user-utils";
 import { paginationQuery } from "@/utils/pagination";
@@ -74,7 +77,6 @@ export async function POST(req: Request) {
 }
 
 // -------- PUT: Update Profile or Admin Update --------
-
 export async function PUT(req: NextRequest) {
   const contentType = req.headers.get("content-type");
   const formData = await req.formData();
@@ -82,8 +84,9 @@ export async function PUT(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   const currentUser = session?.user;
 
-  if (!currentUser)
+  if (!currentUser) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
 
   try {
     if (contentType?.includes("multipart/form-data")) {
@@ -95,15 +98,31 @@ export async function PUT(req: NextRequest) {
 
       // Avatar
       if (file && file.size > 0) {
+        if (currentUser.image) {
+          // Supprime l'ancienne image si elle existe
+          try {
+            await deleteFileFromVercelBlob(currentUser.image);
+            console.log("Ancienne image supprimé: ", currentUser.image);
+          } catch (deleteError) {
+            console.warn(
+              `Impossible de supprimer l'ancien avatar ${currentUser.image}:`,
+              deleteError
+            );
+          }
+        }
+
         const imagePath = await handleUpload({
           file,
           folder: "avatars",
-          filenamePrefix: `avatar-${currentUser.id}-${slugify(name)}`,
+          filenamePrefix: `avatar-${currentUser.id}-${slugify(
+            name || currentUser.name || "user"
+          )}`,
         });
         await auth.api.updateUser({
           body: { image: imagePath },
           headers: await headers(),
         });
+        console.log("Nouvelle image enregistré: ", imagePath);
       }
 
       // Nom
@@ -141,7 +160,6 @@ export async function PUT(req: NextRequest) {
         const notAllowed = await requireRole("ADMIN");
         try {
           if (notAllowed) return notAllowed;
-          console.log("user allowed");
           await prisma.user.update({
             where: { id: userId },
             data: { isActive: true },
@@ -166,7 +184,6 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({ error: "Requête invalide" }, { status: 400 });
   } catch (error) {
-    console.log("Erreur PUT /api/user", error);
     console.error("Erreur PUT /api/user", error);
     return NextResponse.json(
       {
