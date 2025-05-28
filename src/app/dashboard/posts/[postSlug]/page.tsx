@@ -37,11 +37,11 @@ import DeletePost from "../../components/delete-post";
 import "@/styles/tiptap-content-render.scss";
 
 export default function PostDetailsPage() {
-  const { postId } = useParams();
+  const { postSlug } = useParams();
   const router = useRouter();
 
   const { data, isLoading, isError, refetch } = usePostByIdQuery(
-    postId as string
+    postSlug as string
   );
   const post = data?.post;
 
@@ -50,7 +50,7 @@ export default function PostDetailsPage() {
   const publishPost = async () => {
     try {
       await publishPostMutation.mutateAsync({
-        id: post.id,
+        id: post.slug,
         published: !post.published,
       });
     } catch (error) {
@@ -159,7 +159,9 @@ export default function PostDetailsPage() {
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                onClick={() => router.push(`/dashboard/posts/${post.id}/edit`)}
+                onClick={() =>
+                  router.push(`/dashboard/posts/${post.slug}/edit`)
+                }
               >
                 <PencilLineIcon className="mr-2 h-4 w-4" />
                 Modifier
@@ -210,7 +212,12 @@ export default function PostDetailsPage() {
                   <h3 className="text-lg flex items-center gap-2">
                     <span className="font-medium text-primary">
                       {comment.visitorName}
-                    </span>{" "}
+                    </span>
+                    {" - "}
+                    <span className="font-medium text-primary">
+                      {comment.visitorEmail}
+                    </span>
+                    {" - "}
                     <span className="italic text-black font-light">
                       {formatDate(comment.createdAt)}
                     </span>

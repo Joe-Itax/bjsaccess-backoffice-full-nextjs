@@ -1,40 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
+import fs from "fs";
+import path from "path";
 import { prisma, Prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { removeAccents } from "@/utils/user-utils";
 import { handleUpload } from "@/lib/middlewares/upload-file";
-import fs from "fs";
 import { generateUniqueSlug } from "@/utils/generate-unique-slug";
-import path from "path";
 
 /**
- * @route GET /api/post/:id
- * @description Get a single post by ID
+ * @route GET /api/post/:slug
+ * @description Get a single post by SLUG
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: { postSlug: string } }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  const { postId } = await params;
+  const { postSlug } = await params;
 
   const isBackOffice = session?.user ? true : false;
 
   try {
     const post = await prisma.post.findUnique({
-      where: { id: postId },
+      where: { slug: postSlug },
       select: {
         id: true,
         title: true,
         slug: true,
         content: true,
-        published: isBackOffice, // Only expose if back-office
+        published: isBackOffice,
         featuredImage: true,
         createdAt: true,
-        updatedAt: isBackOffice, // Only expose if back-office
-        authorId: isBackOffice, // Only expose if back-office
+        updatedAt: isBackOffice,
+        authorId: isBackOffice,
         category: {
           select: {
             id: true,
@@ -64,9 +64,9 @@ export async function GET(
           select: {
             id: true,
             visitorName: true,
-            visitorEmail: isBackOffice, // Only expose if back-office
+            visitorEmail: isBackOffice,
             content: true,
-            isApproved: isBackOffice, // Only expose if back-office
+            isApproved: isBackOffice,
             postId: true,
             createdAt: true,
           },
@@ -118,15 +118,14 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: { postSlug: string } }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user)
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
-  const { postId } = await params;
+  const { postSlug } = await params;
 
-  const authenticatedUser = session?.user;
   let tempImagePath: string | null = null;
 
   try {
@@ -162,19 +161,12 @@ export async function PUT(
     const updatedPost = await prisma.$transaction(async (tx) => {
       // 1. Check if post exists and user has permission
       const existingPost = await tx.post.findUnique({
-        where: { id: postId },
+        where: { slug: postSlug },
         include: { author: true, tags: true }, // Include tags for cleanup
       });
 
       if (!existingPost) {
         throw new Error("Article non trouvé");
-      }
-
-      if (
-        authenticatedUser?.id !== existingPost.authorId &&
-        authenticatedUser?.role !== "ADMIN"
-      ) {
-        throw new Error("Vous n'êtes pas autorisé à modifier cet article.");
       }
 
       // 2. Check category if provided
@@ -280,7 +272,7 @@ export async function PUT(
       }
 
       return await tx.post.update({
-        where: { id: postId },
+        where: { slug: postSlug },
         data: updateData,
         include: {
           category: true,
@@ -406,13 +398,13 @@ export async function PUT(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: { postSlug: string } }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user)
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
-  const { postId } = await params;
+  const { postSlug } = await params;
 
   const authenticatedUser = session.user;
 
@@ -420,7 +412,7 @@ export async function DELETE(
     await prisma.$transaction(async (tx) => {
       // 1. Check if post exists and user has permission
       const post = await tx.post.findUnique({
-        where: { id: postId },
+        where: { slug: postSlug },
         include: { author: true },
       });
 
@@ -431,7 +423,7 @@ export async function DELETE(
         authenticatedUser?.id !== post.authorId &&
         authenticatedUser?.role !== "ADMIN"
       ) {
-        throw new Error("Non autorisé à supprimer cet article");
+        throw new Error("Vous n'êtes pas autorisé à éffectué cette action.");
       }
 
       // 2. Delete the featured image if it exists
@@ -450,13 +442,13 @@ export async function DELETE(
       }
 
       // 3. Delete related comments
-      await tx.comment.deleteMany({ where: { postId } });
+      await tx.comment.deleteMany({ where: { postId: post.id } });
 
       // 4. Delete tag relationships
-      await tx.tagsOnPosts.deleteMany({ where: { postId } });
+      await tx.tagsOnPosts.deleteMany({ where: { postId: post.id } });
 
       // 5. Finally, delete the post
-      await tx.post.delete({ where: { id: postId } });
+      await tx.post.delete({ where: { slug: postSlug } });
     });
 
     return NextResponse.json(
@@ -490,7 +482,9 @@ export async function DELETE(
       }
       // General error
       return NextResponse.json(
-        { message: "Error deleting post", error: error.message },
+        {
+          message: error.message || "Erreur lors de la suppresion de l'article",
+        },
         { status: 500 }
       );
     }

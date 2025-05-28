@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { prisma, Prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { requireRole } from "@/lib/middlewares/require-role";
 
 export const config = {
   api: {
@@ -35,6 +36,9 @@ export async function DELETE(
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user)
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+
+  const notAllowed = await requireRole("ADMIN");
+  if (notAllowed) return notAllowed;
   const { categoryId } = await params;
 
   try {

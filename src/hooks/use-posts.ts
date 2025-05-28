@@ -46,11 +46,11 @@ export function useSearchPostsMutation() {
   });
 }
 
-export function usePostByIdQuery(id: string) {
+export function usePostByIdQuery(slug: string) {
   return useQuery({
-    queryKey: ["post", id],
+    queryKey: ["post", slug],
     queryFn: async () => {
-      const res = await fetch(`/api/post/${id}`, {
+      const res = await fetch(`/api/post/${slug}`, {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Erreur récupération de l'article");
@@ -113,7 +113,7 @@ export function useCreatePostMutation() {
     onSuccess: (data) => {
       show("success", data.message || "Article créer avec succès");
       queryClient.invalidateQueries({ queryKey: ["posts"] });
-      router.push("/dashboard/posts");
+      router.push(`/dashboard/posts/${data.post.slug}`);
     },
     onError: (error) => {
       show("error", error.message || "Erreur lors de la création de l'article");
@@ -124,10 +124,11 @@ export function useCreatePostMutation() {
 export function useUpdatePostMutation() {
   const { show } = useNotification();
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   return useMutation({
-    mutationFn: async ({ id, form }: { id: string; form: FormData }) => {
-      const res = await fetch(`/api/post/${id}`, {
+    mutationFn: async ({ slug, form }: { slug: string; form: FormData }) => {
+      const res = await fetch(`/api/post/${slug}`, {
         method: "PUT",
         credentials: "include",
         body: form,
@@ -142,6 +143,7 @@ export function useUpdatePostMutation() {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["post"] });
       queryClient.invalidateQueries({ queryKey: ["tags"] });
+      router.push(`/dashboard/posts/${data.post!.slug}`);
     },
     onError: (error) => {
       show(
@@ -211,7 +213,7 @@ export function useDeletePostMutation() {
 
       // Invalider les requêtes affectées
       queryClient.invalidateQueries({ queryKey: ["posts"] });
-
+      queryClient.invalidateQueries({ queryKey: ["dashboard-overview"] });
       router.push("/dashboard/posts");
     },
     onError: (error: Error) => {

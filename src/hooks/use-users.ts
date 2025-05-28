@@ -188,7 +188,7 @@ export function useDeleteUserMutation() {
       // Invalider les requêtes affectées
       queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
-
+      queryClient.invalidateQueries({ queryKey: ["dashboard-overview"] });
       router.push("/dashboard/users");
 
       // Si l'utilisateur supprimé est l'utilisateur courant

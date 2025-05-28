@@ -4,8 +4,8 @@ import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { MoveLeftIcon } from "lucide-react";
-import { useCategoriesQuery, useCreatePostMutation } from "@/hooks/use-posts"; // Removed useTagsQuery as tags are now content-driven
-import { Category } from "@/types/posts"; // Removed Tag import
+import { useCategoriesQuery, useCreatePostMutation } from "@/hooks/use-posts";
+import { Category } from "@/types/posts";
 import Spinner from "@/components/spinner";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
 import { useRouter } from "next/navigation";
@@ -14,7 +14,6 @@ type PostFormData = {
   title: string;
   content: string;
   categoryId: string;
-  // tags: string[]; // Removed as tags are now content-driven
   featuredImage: File | null;
 };
 type PostFormErrors = {
@@ -24,7 +23,6 @@ type PostFormErrors = {
 export default function CreatePost() {
   const { data: categories = [], isPending: catIsPending } =
     useCategoriesQuery();
-  // Removed useTagsQuery
   const router = useRouter();
   const [formData, setFormData] = useState<PostFormData>({
     title: "",
@@ -59,9 +57,8 @@ export default function CreatePost() {
 
     const form = new FormData();
     form.append("title", formData.title);
-    form.append("content", formData.content); // Content from Tiptap, including #tags
+    form.append("content", formData.content);
     form.append("categoryId", formData.categoryId);
-    // Removed appending tags from formData.tags
     if (formData.featuredImage) {
       form.append("featuredImage", formData.featuredImage);
     }
@@ -74,7 +71,6 @@ export default function CreatePost() {
         categoryId: "",
         featuredImage: null,
       });
-      router.push("/dashboard/posts"); // Redirect to posts list after creation
     } catch (err) {
       console.error(err);
     }
@@ -86,7 +82,6 @@ export default function CreatePost() {
     >
   ) => {
     const { name, value } = e.target;
-    // Removed tag handling
     setFormData((prev) => ({ ...prev, [name]: value }));
 
     if (errors[name as keyof PostFormData]) {
@@ -108,7 +103,6 @@ export default function CreatePost() {
   };
 
   if (catIsPending) {
-    // Removed tagIsPending
     return (
       <div className="w-full py-64 flex justify-center items-center">
         <div className="flex gap-4 items-center">
@@ -178,35 +172,6 @@ export default function CreatePost() {
               <p className="text-sm text-red-500">{errors.categoryId}</p>
             )}
           </div>
-
-          {/* Removed Tags checkbox section */}
-          {/*
-          <div className="space-y-2">
-            <Label>Tags</Label>
-            <div className="flex flex-wrap gap-3">
-              {tags.map((tag: Tag) => (
-                <label key={tag.id} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    value={tag.id}
-                    checked={formData.tags.includes(tag.id)}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
-                      const tagId = e.target.value;
-                      setFormData((prev) => ({
-                        ...prev,
-                        tags: checked
-                          ? [...prev.tags, tagId]
-                          : prev.tags.filter((id) => id !== tagId),
-                      }));
-                    }}
-                  />
-                  {tag.name}
-                </label>
-              ))}
-            </div>
-          </div>
-          */}
 
           <div className="space-y-2">
             <Label htmlFor="featuredImage">Image à la une</Label>

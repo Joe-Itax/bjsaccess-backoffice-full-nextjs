@@ -12,7 +12,6 @@ export function useDashboardStatsQuery() {
         const data = await res.json();
 
         if (!res.ok) {
-          //   console.error(data.message || "Erreur lors du fetch des stats.");
           throw new Error(data.message || "Erreur lors du fetch des stats.");
         }
 

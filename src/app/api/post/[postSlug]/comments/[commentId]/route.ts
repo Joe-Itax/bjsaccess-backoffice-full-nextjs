@@ -18,9 +18,6 @@ export async function PUT(
   const { commentId } = params;
   const { action } = await req.json(); // "approve" or "reject"
 
-  const notAllowed = await requireRole("ADMIN");
-  if (notAllowed) return notAllowed;
-
   if (action !== "approve" && action !== "reject") {
     return NextResponse.json(
       { message: 'Action invalide. Devrait-être "approve" ou "reject".' },

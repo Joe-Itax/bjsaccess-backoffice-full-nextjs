@@ -1,9 +1,6 @@
-// import { auth } from "@/lib/auth";
-// import { User } from "@/generated/prisma";
 import { requireRole } from "@/lib/middlewares/require-role";
 import { prisma } from "@/lib/prisma";
 import { removeAccents } from "@/utils/user-utils";
-// import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 const protectedAccounts = process.env.PROTECTED_ACCOUNTS?.split(",") || [];
 
@@ -17,7 +14,7 @@ export async function DELETE(req: NextRequest) {
   const notAllowed = await requireRole("ADMIN");
   if (notAllowed) return notAllowed;
 
-  const data = await req.json(); // e.g. { ids: ["1", "2"] }
+  const data = await req.json();
   const userIds = data.userIds;
 
   if (!Array.isArray(userIds)) {

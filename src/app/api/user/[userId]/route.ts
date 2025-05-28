@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { removeAccents } from "@/utils/user-utils";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import fs from "fs/promises";
+import path from "path";
+
 const protectedAccounts = process.env.PROTECTED_ACCOUNTS?.split(",") || [];
 
 export const config = {
@@ -155,13 +158,12 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: { userId: string } }
 ) {
- 
+  const notAllowed = await requireRole("ADMIN");
+  if (notAllowed) return notAllowed;
 
   const { userId } = await params;
 
   try {
-    // await prisma.user.delete({ where: { id: params.userId } });
-    // return NextResponse.json({ message: "Utilisateur supprimé" });
     await prisma.$transaction(async (tx) => {
       // 1. Vérifier que l'utilisateur existe
       const user = await tx.user.findUnique({
@@ -171,7 +173,13 @@ export async function DELETE(
           role: true,
           name: true,
           email: true,
-          posts: { select: { id: true } },
+          image: true, // Sélectionner le chemin de l'image de profil
+          posts: {
+            select: {
+              id: true,
+              featuredImage: true, // Sélectionner le chemin de l'image à la une de chaque post
+            },
+          },
         },
       });
 
@@ -182,40 +190,81 @@ export async function DELETE(
       if (
         protectedAccounts.some(
           (entry: unknown) =>
-            //   user.email.includes(entry)
             typeof entry === "string" && user.email.includes(entry as string)
         ) ||
-        protectedAccounts.some((protectedName) =>
-          removeAccents(user.name ?? "").includes(protectedName.toLowerCase())
+        protectedAccounts.some(
+          (protectedName) =>
+            removeAccents(user.name ?? "")
+              .toLowerCase()
+              .includes(protectedName.toLowerCase()) // Correction: toLowerCase() sur user.name pour une meilleure comparaison
         )
       ) {
         throw new Error("Utilisateur protégé!!! Impossible de le supprimer");
       }
 
-      // 2. Supprimer les commentaires de l'utilisateur (s'ils existent)
+      // 2. Supprimer la photo de profil de l'utilisateur si elle existe
+      if (user.image && user.image.startsWith("/uploads/avatars/")) {
+        const imagePath = path.join(process.cwd(), "public", user.image);
+        try {
+          await fs.unlink(imagePath);
+          console.log(`Image de profil supprimée: ${imagePath}`);
+        } catch (unlinkError) {
+          console.warn(
+            `Impossible de supprimer l'image de profil ${imagePath}:`,
+            unlinkError
+          );
+          // Ne pas bloquer la suppression de l'utilisateur si l'image n'est pas trouvée ou autre erreur de fichier
+        }
+      }
+
+      // 3. Supprimer les commentaires de l'utilisateur (s'ils existent)
       await tx.comment.deleteMany({
         where: { visitorEmail: user.email },
       });
 
-      // 3. Pour chaque post de l'utilisateur :
+      // 4. Pour chaque post de l'utilisateur :
       for (const post of user.posts) {
-        // a. Supprimer les relations tags
+        // a. Supprimer l'image à la une du post si elle existe
+        if (
+          post.featuredImage &&
+          post.featuredImage.startsWith("/uploads/featured-images/")
+        ) {
+          const featuredImagePath = path.join(
+            process.cwd(),
+            "public",
+            post.featuredImage
+          );
+          try {
+            await fs.unlink(featuredImagePath);
+            console.log(
+              `Image à la une du post supprimée: ${featuredImagePath}`
+            );
+          } catch (unlinkError) {
+            console.warn(
+              `Impossible de supprimer l'image à la une ${featuredImagePath}:`,
+              unlinkError
+            );
+            // Ne pas bloquer la suppression du post si l'image n'est pas trouvée ou autre erreur de fichier
+          }
+        }
+
+        // b. Supprimer les relations tags
         await tx.tagsOnPosts.deleteMany({
           where: { postId: post.id },
         });
 
-        // b. Supprimer les commentaires du post
+        // c. Supprimer les commentaires du post
         await tx.comment.deleteMany({
           where: { postId: post.id },
         });
       }
 
-      // 4. Supprimer tous les posts de l'utilisateur
+      // 5. Supprimer tous les posts de l'utilisateur
       await tx.post.deleteMany({
         where: { authorId: userId },
       });
 
-      // 5. Finalement supprimer l'utilisateur
+      // 6. Finalement supprimer l'utilisateur
       await tx.user.delete({
         where: { id: userId },
       });
@@ -230,14 +279,23 @@ export async function DELETE(
     if (error instanceof Error && error.message === "Utilisateur non trouvé") {
       return NextResponse.json(
         {
-          error:
-            error instanceof Error
-              ? error.message
-              : "Erreur lors de la suppression de l'utilisateur",
+          error: "Utilisateur non trouvé",
         },
         { status: 404 }
       );
     }
+    if (
+      error instanceof Error &&
+      error.message.includes("Utilisateur protégé")
+    ) {
+      return NextResponse.json(
+        {
+          message: error.message,
+        },
+        { status: 403 }
+      );
+    }
+    console.error("Erreur lors de la suppression de l'utilisateur:", error);
     return NextResponse.json(
       {
         error:

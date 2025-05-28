@@ -22,11 +22,13 @@ type PostFormData = {
 };
 
 export default function UpdatePostPage() {
-  const { postId } = useParams();
+  const { postSlug } = useParams();
   const router = useRouter();
 
   const { data: categories, isPending: catIsPending } = useCategoriesQuery();
-  const { data, isPending: postIsPending } = usePostByIdQuery(postId as string);
+  const { data, isPending: postIsPending } = usePostByIdQuery(
+    postSlug as string
+  );
   const post = data?.post;
   const { mutateAsync: updatePostMutation, isPending } =
     useUpdatePostMutation();
@@ -80,10 +82,9 @@ export default function UpdatePostPage() {
 
     try {
       await updatePostMutation({
-        id: post!.id,
+        slug: post!.slug,
         form,
       });
-      router.push(`/dashboard/posts/${post!.id}`);
     } catch (error) {
       console.error(error);
     }
@@ -130,7 +131,10 @@ export default function UpdatePostPage() {
   return (
     <section className="container size-full mx-auto flex justify-center">
       <div className="px-4 md:p-8 sm:px-4 size-full">
-        <Button variant="ghost" onClick={() => router.back()}>
+        <Button
+          variant="ghost"
+          onClick={() => router.push(`/dashboard/posts/${post.slug}`)}
+        >
           <MoveLeftIcon />
         </Button>
         <h1 className="ml-0 mb-4 text-2xl font-bold">

@@ -98,7 +98,7 @@ export default function PostCard({ post }: PostCardProps) {
           </div>
         )}
 
-        <Link href={`/dashboard/posts/${post.id}`}>
+        <Link href={`/dashboard/posts/${post.slug}`}>
           <Button
             variant="link"
             className="inline-flex items-center justify-center text-blue-500 hover:text-blue-700 font-medium uppercase"

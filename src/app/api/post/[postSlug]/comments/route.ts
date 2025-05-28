@@ -10,11 +10,11 @@ import { paginationQuery } from "@/utils/pagination";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: { postSlug: string } }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
   const isBackOffice = session?.user ? true : false;
-  const { postId } = params;
+  const { postSlug } = params;
   const { searchParams } = req.nextUrl;
   const page = Number(searchParams.get("page")) || 1;
   const limit = Number(searchParams.get("limit")) || 10;
@@ -23,7 +23,7 @@ export async function GET(
   try {
     // Verify that the post exists
     const post = await prisma.post.findUnique({
-      where: { id: postId },
+      where: { slug: postSlug },
       select: { id: true }, // Only need existence check
     });
 
@@ -32,7 +32,7 @@ export async function GET(
     }
 
     const where: Prisma.CommentWhereInput = {
-      postId,
+      postId: post.id,
       ...(approvedOnly && !isBackOffice && { isApproved: true }), // For public view, only approved comments
       // For back-office, show all comments for moderation regardless of `approvedOnly` query param
     };
@@ -73,9 +73,9 @@ export async function GET(
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: { postSlug: string } }
 ) {
-  const { postId } = await params;
+  const { postSlug } = await params;
   const { content, visitorName, visitorEmail } = await req.json();
 
   if (!content || !visitorName || !visitorEmail) {
@@ -88,8 +88,8 @@ export async function POST(
   try {
     // Verify that the post exists and is published
     const post = await prisma.post.findUnique({
-      where: { id: postId },
-      select: { published: true },
+      where: { slug: postSlug },
+      select: { id: true, published: true },
     });
 
     if (!post) {
@@ -112,7 +112,7 @@ export async function POST(
         content,
         visitorName,
         visitorEmail,
-        postId,
+        postId: post.id,
       },
     });
 

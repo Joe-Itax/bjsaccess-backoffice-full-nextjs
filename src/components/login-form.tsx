@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  //  useEffect,
-  useState,
-} from "react";
+import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { LoginSchema } from "@/lib/validators/login";
@@ -11,16 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
-// import { useRouter } from "next/navigation";
 import { useNotification } from "@/hooks/use-notification";
-
-// import { useLoginMutation } from "@/hooks/use-auth-user";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
-  // const loginMutation = useLoginMutation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isPending, setIsPending] = useState(false);
@@ -30,7 +23,6 @@ export function LoginForm({
   }>({});
 
   const { signIn } = authClient;
-  // const router = useRouter();
   const { show } = useNotification();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,6 +48,12 @@ export function LoginForm({
       });
       if (signInResponse.error?.code === "INVALID_EMAIL_OR_PASSWORD") {
         return show("error", "Email ou mot de passe incorrect");
+      } else if (signInResponse.error?.code === "ACCOUNT_DEACTIVATED") {
+        return show(
+          "error",
+          signInResponse.error?.message ||
+            "Votre compte est désactivé. Veuillez contacter l'administrateur."
+        );
       }
       if (signInResponse.error) {
         return show(
@@ -73,30 +71,6 @@ export function LoginForm({
     }
   };
 
-  // const handleSignUp = async () => {
-  //   try {
-  //     const email = "josephitakala18@gmail.com";
-  //     const password = "bjs@ccesS123";
-  //     const name = "Joseph Itakala";
-  //     const role = "ADMIN"
-  //     const { data, error } = await authClient.signUp.email({
-  //       email,
-  //       password,
-  //       name,
-  //       role
-  //     });
-
-  //     if (error) {
-  //       console.log("Erreur BetterAuth:: ", error);
-  //     }
-  //     console.log("Utilisateur inscrit avec succès: ", data);
-  //   } catch (error) {
-  //     console.error("Erreur JS: ", error);
-  //   }
-  // };
-  // useEffect(() => {
-  // handleSignUp();
-  // });
   return (
     <form
       className={cn("flex flex-col gap-6", className)}

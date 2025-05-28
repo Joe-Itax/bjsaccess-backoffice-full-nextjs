@@ -26,9 +26,8 @@
   --tt-radius-xs: 0.25rem; // Rayon de bordure si utilisé
 
   // Variables pour les tags
-  --tag-bg-color: #e0f2f7; // Exemple de bleu très clair
-  --tag-text-color: #007bff; // Bleu principal
-  --tag-border-color: #007bff;
+  --tag-bg-color: oklch(93.2% 0.032 255.585);
+  --tag-text-color: oklch(42.4% 0.199 265.638);
 
   // Variables pour le thème sombre (si ton application gère un mode sombre via la classe `dark` sur `html` ou `body`)
   .dark & {
@@ -51,9 +50,8 @@
     --separator-color: #555;
 
     // Variables pour les tags
-    --tag-dark-bg-color: #283742; // Bleu foncé plus sombre
-    --tag-dark-text-color: #69c0ff; // Bleu clair pour le texte
-    --tag-dark-border-color: #69c0ff;
+    --tag-bg-color: oklch(93.2% 0.032 255.585);
+    --tag-text-color: oklch(42.4% 0.199 265.638);
   }
 
   // Styles généraux pour le contenu textuel
@@ -415,11 +413,13 @@
   .tiptap-tag {
     display: inline-flex;
     align-items: center;
-    text-decoration: underline;
-    color: var(--tag-text-color, #007bff);
+    color: var(--tag-text-color, #193cb8);
+    background-color: var(--tag-bg-color, #dbeafe);
     font-weight: 500;
+    border-radius: calc(infinity * 1px);
     font-style: normal;
     white-space: nowrap;
+    padding: 4px 12px;
     cursor: default;
 
     .dark & {
