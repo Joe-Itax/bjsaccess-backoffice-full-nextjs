@@ -44,9 +44,9 @@ export default function CreatePost() {
     }
     if (
       formData.featuredImage &&
-      formData.featuredImage.size > 5 * 1024 * 1024
+      formData.featuredImage.size > 1024 * 1024 // 1Mo
     ) {
-      newErrors.featuredImage = "L'image ne doit pas dépasser 5 Mo";
+      newErrors.featuredImage = "L'image ne doit pas dépasser 1 Mo";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;

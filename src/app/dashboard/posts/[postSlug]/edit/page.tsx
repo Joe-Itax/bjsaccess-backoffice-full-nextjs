@@ -51,8 +51,6 @@ export default function UpdatePostPage() {
     }
   }, [post]);
 
-  console.log("post ici - line 52: ", post);
-
   const [errors, setErrors] = useState<
     Partial<Record<keyof PostFormData, string>>
   >({});
@@ -64,6 +62,12 @@ export default function UpdatePostPage() {
     if (!formData.content.trim() || formData.content === "<p></p>")
       newErrors.content = "Le contenu est requis";
     if (!formData.categoryId) newErrors.categoryId = "La catégorie est requise";
+    if (
+      formData.featuredImage &&
+      formData.featuredImage.size > 1024 * 1024 // 1Mo
+    ) {
+      newErrors.featuredImage = "L'image ne doit pas dépasser 1 Mo";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
