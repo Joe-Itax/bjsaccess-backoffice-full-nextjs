@@ -6,6 +6,7 @@ import { paginationQuery } from "@/utils/pagination";
 import { removeAccents } from "@/utils/user-utils";
 import { Post } from "@/types/posts";
 
+export const dynamic = "force-dynamic"; // Important pour Vercel
 /**
  * @route GET /api/post/search
  * @description Search posts by title, content, or searchableTitle with pagination
