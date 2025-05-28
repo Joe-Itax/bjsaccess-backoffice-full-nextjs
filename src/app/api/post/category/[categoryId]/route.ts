@@ -31,7 +31,7 @@ async function ensureDefaultCategoryExists(tx: Prisma.TransactionClient) {
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { categoryId: string } }
+  context: { params: Promise<{ categoryId: string }> }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user)
@@ -39,7 +39,7 @@ export async function DELETE(
 
   const notAllowed = await requireRole("ADMIN");
   if (notAllowed) return notAllowed;
-  const { categoryId } = await params;
+  const { categoryId } = await context.params;
 
   try {
     const result = await prisma.$transaction(async (tx) => {

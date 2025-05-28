@@ -10,11 +10,11 @@ import { paginationQuery } from "@/utils/pagination";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { postSlug: string } }
+  context: { params: Promise<{ postSlug: string }> }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
   const isBackOffice = session?.user ? true : false;
-  const { postSlug } = params;
+  const { postSlug } = await context.params;
   const { searchParams } = req.nextUrl;
   const page = Number(searchParams.get("page")) || 1;
   const limit = Number(searchParams.get("limit")) || 10;
@@ -73,9 +73,9 @@ export async function GET(
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { postSlug: string } }
+  context: { params: Promise<{ postSlug: string }> }
 ) {
-  const { postSlug } = await params;
+  const { postSlug } = await context.params;
   const { content, visitorName, visitorEmail } = await req.json();
 
   if (!content || !visitorName || !visitorEmail) {

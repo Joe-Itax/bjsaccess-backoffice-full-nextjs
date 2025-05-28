@@ -18,13 +18,13 @@ export const config = {
 // -------- GET: Récupérer un user --------
 export async function GET(
   req: NextRequest,
-  { params }: { params: { userId: string } }
+  context: { params: Promise<{ userId: string }> }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user)
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  const { userId } = await params;
+  const { userId } = await context.params;
   console.log("userId: ", userId);
 
   //   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -115,12 +115,12 @@ export async function GET(
 // -------- PUT: Mettre à jour un user --------
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { userId: string } }
+  context: { params: Promise<{ userId: string }> }
 ) {
   const notAllowed = await requireRole("ADMIN");
   if (notAllowed) return notAllowed;
 
-  const { userId } = await params;
+  const { userId } = await context.params;
 
   try {
     const formData = await req.formData();
@@ -156,12 +156,12 @@ export async function PUT(
 // -------- DELETE: Supprimer un user --------
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { userId: string } }
+  context: { params: Promise<{ userId: string }> }
 ) {
   const notAllowed = await requireRole("ADMIN");
   if (notAllowed) return notAllowed;
 
-  const { userId } = await params;
+  const { userId } = await context.params;
 
   try {
     await prisma.$transaction(async (tx) => {

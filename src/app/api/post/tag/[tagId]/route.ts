@@ -11,12 +11,12 @@ export const config = {
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { tagId: string } }
+  context: { params: Promise<{ tagId: string }> }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user)
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
-  const { tagId } = await params;
+  const { tagId } = await context.params;
 
   try {
     await prisma.$transaction(async (tx) => {

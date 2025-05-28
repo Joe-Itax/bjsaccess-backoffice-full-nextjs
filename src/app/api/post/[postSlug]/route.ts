@@ -14,11 +14,11 @@ import { generateUniqueSlug } from "@/utils/generate-unique-slug";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { postSlug: string } }
+  context: { params: Promise<{ postSlug: string }> }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  const { postSlug } = await params;
+  const { postSlug } = await context.params;
 
   const isBackOffice = session?.user ? true : false;
 
@@ -118,13 +118,13 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { postSlug: string } }
+  context: { params: Promise<{ postSlug: string }> }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user)
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
-  const { postSlug } = await params;
+  const { postSlug } = await context.params;
 
   let tempImagePath: string | null = null;
 
@@ -398,13 +398,13 @@ export async function PUT(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { postSlug: string } }
+  context: { params: Promise<{ postSlug: string }> }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user)
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
-  const { postSlug } = await params;
+  const { postSlug } = await context.params;
 
   const authenticatedUser = session.user;
 
