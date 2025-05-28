@@ -8,28 +8,22 @@ import { requireRole } from "@/lib/middlewares/require-role";
  * @route PUT /api/post/:postId/comments/:commentId
  * @description Moderate a comment (approve/reject)
  */
-interface PutContext {
-  params: {
-    postSlug: string;
-    commentId: string;
-  };
-}
 
 export async function PUT(
-  request: NextRequest,
-  { params }: PutContext
-): Promise<NextResponse> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) {
-    return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
-  }
+  req: NextRequest,
+  { params }: { params: Promise<{ postSlug: string; commentId: string }> }
+) {
+  const { commentId } = await params;
 
-  const { commentId } = params;
-  const { action } = await request.json();
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user)
+    return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+
+  const { action } = await req.json();
 
   if (action !== "approve" && action !== "reject") {
     return NextResponse.json(
-      { message: 'Action invalide. Devrait-être "approve" ou "reject".' },
+      { message: 'Action invalide. Devrait être "approve" ou "reject".' },
       { status: 400 }
     );
   }
@@ -67,6 +61,7 @@ export async function PUT(
       typeof error === "object" &&
       error !== null &&
       "code" in error &&
+      typeof (error as { code: unknown }).code === "string" &&
       (error as { code: string }).code === "P2025"
     ) {
       return NextResponse.json(
