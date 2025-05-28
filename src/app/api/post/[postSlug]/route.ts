@@ -8,6 +8,8 @@ import { removeAccents } from "@/utils/user-utils";
 import { handleUpload } from "@/lib/middlewares/upload-file";
 import { generateUniqueSlug } from "@/utils/generate-unique-slug";
 
+export const dynamic = "force-dynamic"; // Important pour Vercel
+
 /**
  * @route GET /api/post/:slug
  * @description Get a single post by SLUG

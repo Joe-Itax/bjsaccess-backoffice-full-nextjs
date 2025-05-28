@@ -3,6 +3,8 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
+export const dynamic = "force-dynamic"; // Important pour Vercel
+
 export const config = {
   api: {
     bodyParser: false,

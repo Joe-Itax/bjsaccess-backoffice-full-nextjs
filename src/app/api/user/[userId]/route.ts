@@ -8,6 +8,8 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 
+export const dynamic = "force-dynamic"; // Important pour Vercel
+
 const protectedAccounts = process.env.PROTECTED_ACCOUNTS?.split(",") || [];
 
 export const config = {

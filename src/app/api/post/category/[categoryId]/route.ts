@@ -4,6 +4,8 @@ import { prisma, Prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { requireRole } from "@/lib/middlewares/require-role";
 
+export const dynamic = "force-dynamic"; // Important pour Vercel
+
 export const config = {
   api: {
     bodyParser: false,
