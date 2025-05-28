@@ -1,97 +1,74 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export const dynamic = "force-dynamic"; // Important pour Vercel
+export const dynamic = "force-dynamic";
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastMonthEnd = new Date(startOfMonth.getTime() - 1);
-    const threeMonthsAgo = new Date(new Date().setMonth(now.getMonth() - 3));
+    // Optimisation des requêtes Prisma
+    const stats = await getDashboardStats();
 
-    // Helper function to format dates for grouping.
-    const formatDateForComparison = (date: Date): string => {
-      const d = new Date(date);
-      return new Date(d.getFullYear(), d.getMonth(), d.getDate())
-        .toISOString()
-        .split("T")[0];
-    };
+    return NextResponse.json(stats);
+  } catch (error) {
+    console.error("[DASHBOARD_STATS_ERROR]", error);
+    return NextResponse.json(
+      { error: "Failed to fetch dashboard stats" },
+      { status: 500 }
+    );
+  }
+}
 
-    // Execute all Prisma queries in parallel using Promise.all
-    const [
-      totalPosts,
-      publishedPosts,
-      newPostsThisMonth,
-      totalComments,
-      approvedComments,
-      newCommentsThisMonth,
-      totalCategories,
-      totalTags,
-      postsLastMonth,
-      postsGroup,
-      commentsGroup,
-      popularPosts,
-    ] = await Promise.all([
-      // Basic Stats
-      prisma.post.count(),
-      prisma.post.count({ where: { published: true } }),
+async function getDashboardStats() {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthEnd = new Date(startOfMonth.getTime() - 1);
+  const threeMonthsAgo = new Date(new Date().setMonth(now.getMonth() - 3));
+
+  // Toutes les requêtes en parallèle
+  const [counts, postsLastMonth, postsGroup, commentsGroup, popularPosts] =
+    await Promise.all([
+      // Counts de base
+      prisma.$transaction([
+        prisma.post.count(),
+        prisma.post.count({ where: { published: true } }),
+        prisma.post.count({
+          where: { createdAt: { gte: startOfMonth }, published: true },
+        }),
+        prisma.comment.count(),
+        prisma.comment.count({ where: { isApproved: true } }),
+        prisma.comment.count({
+          where: { createdAt: { gte: startOfMonth }, isApproved: true },
+        }),
+        prisma.category.count(),
+        prisma.tag.count(),
+      ]),
+
+      // Posts du mois dernier
       prisma.post.count({
         where: {
-          createdAt: { gte: startOfMonth },
-          published: true,
-        },
-      }),
-      prisma.comment.count(),
-      prisma.comment.count({ where: { isApproved: true } }),
-      prisma.comment.count({
-        where: {
-          createdAt: { gte: startOfMonth },
-          isApproved: true,
-        },
-      }),
-      prisma.category.count(),
-      prisma.tag.count(),
-      prisma.post.count({
-        where: {
-          createdAt: {
-            gte: lastMonthStart,
-            lte: lastMonthEnd,
-          },
+          createdAt: { gte: lastMonthStart, lte: lastMonthEnd },
           published: true,
         },
       }),
 
-      // Data for Charts - Posts by date
+      // Données pour les graphiques - Posts
       prisma.post.groupBy({
         by: ["createdAt"],
-        where: {
-          createdAt: { gte: threeMonthsAgo },
-        },
+        where: { createdAt: { gte: threeMonthsAgo } },
         _count: { id: true },
         orderBy: { createdAt: "asc" },
       }),
 
-      // Data for Charts - Comments by date
+      // Données pour les graphiques - Commentaires
       prisma.comment.groupBy({
         by: ["createdAt"],
-        where: {
-          createdAt: { gte: threeMonthsAgo },
-          isApproved: true,
-        },
+        where: { createdAt: { gte: threeMonthsAgo }, isApproved: true },
         _count: { id: true },
         orderBy: { createdAt: "asc" },
       }),
 
-      // Most Popular Posts
+      // Posts populaires
       prisma.post.findMany({
         where: { published: true },
         select: {
@@ -105,103 +82,89 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    // Calculate Rates
-    const postsGrowthRate =
-      postsLastMonth === 0
-        ? newPostsThisMonth > 0
-          ? 100
-          : 0
-        : ((newPostsThisMonth - postsLastMonth) / postsLastMonth) * 100;
+  // Destructuration des counts
+  const [
+    totalPosts,
+    publishedPosts,
+    newPostsThisMonth,
+    totalComments,
+    approvedComments,
+    newCommentsThisMonth,
+    totalCategories,
+    totalTags,
+  ] = counts;
 
-    const approvalRate =
-      totalComments === 0 ? 0 : (approvedComments / totalComments) * 100;
+  // Calcul des taux
+  const postsGrowthRate =
+    postsLastMonth === 0
+      ? newPostsThisMonth > 0
+        ? 100
+        : 0
+      : Math.round(
+          ((newPostsThisMonth - postsLastMonth) / postsLastMonth) * 100
+        );
 
-    // Prepare combined data for charts
-    const combinedChartData: { date: Date; posts: number; comments: number }[] =
-      [];
-    const dateMap = new Map<string, { posts: number; comments: number }>();
+  const approvalRate =
+    totalComments === 0
+      ? 0
+      : Math.round((approvedComments / totalComments) * 100);
 
-    // Process posts
-    postsGroup.forEach((post) => {
-      const dateKey = formatDateForComparison(post.createdAt);
-      if (!dateMap.has(dateKey)) {
-        dateMap.set(dateKey, { posts: 0, comments: 0 });
-      }
-      dateMap.get(dateKey)!.posts += post._count.id; // Use non-null assertion as we just set it if not present
-    });
+  // Préparation des données combinées
+  const dateMap = new Map<string, { posts: number; comments: number }>();
 
-    // Process comments
-    commentsGroup.forEach((comment) => {
-      const dateKey = formatDateForComparison(comment.createdAt);
-      if (!dateMap.has(dateKey)) {
-        dateMap.set(dateKey, { posts: 0, comments: 0 });
-      }
-      dateMap.get(dateKey)!.comments += comment._count.id; // Use non-null assertion
-    });
-
-    // Fill in dates with no activity
-    const currentDate = new Date(threeMonthsAgo);
-    while (currentDate <= now) {
-      const dateKey = formatDateForComparison(currentDate);
+  const processData = (
+    items: { createdAt: Date }[],
+    type: "posts" | "comments"
+  ) => {
+    items.forEach((item) => {
+      const dateKey = item.createdAt.toISOString().split("T")[0];
       const data = dateMap.get(dateKey) || { posts: 0, comments: 0 };
-
-      combinedChartData.push({
-        date: new Date(dateKey), // Convert dateKey back to Date object
-        posts: data.posts,
-        comments: data.comments,
+      dateMap.set(dateKey, {
+        ...data,
+        [type]: data[type] + 1, // Simplifié car _count est toujours 1 dans groupBy
       });
+    });
+  };
 
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
+  processData(postsGroup, "posts");
+  processData(commentsGroup, "comments");
 
-    // Format popular posts
-    type PopularPostPayload = (typeof popularPosts)[number];
+  // Remplissage des dates manquantes
+  const chartData = [];
+  const currentDate = new Date(threeMonthsAgo);
 
-    const formattedPopularPosts = popularPosts.map(
-      (post: PopularPostPayload) => ({
-        id: post.id,
-        title: post.title,
-        slug: post.slug,
-        commentsCount: post._count.comments,
-      })
-    );
+  while (currentDate <= now) {
+    const dateKey = currentDate.toISOString().split("T")[0];
+    const data = dateMap.get(dateKey) || { posts: 0, comments: 0 };
 
-    return NextResponse.json(
-      {
-        totalPosts,
-        publishedPosts,
-        draftPosts: totalPosts - publishedPosts,
-        newPostsThisMonth,
-        totalComments,
-        approvedComments,
-        pendingComments: totalComments - approvedComments,
-        newCommentsThisMonth,
-        totalCategories,
-        totalTags,
-        postsGrowthRate: Math.round(postsGrowthRate),
-        approvalRate: Math.round(approvalRate),
-        charts: combinedChartData,
-        popularPosts: formattedPopularPosts,
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Error fetching blog dashboard stats:", error);
+    chartData.push({
+      date: new Date(dateKey),
+      posts: data.posts,
+      comments: data.comments,
+    });
 
-    // Provide a more detailed error message in development if needed
-    const errorMessage =
-      error instanceof Error
-        ? error.message
-        : "An unknown error occurred while fetching dashboard stats.";
-
-    return NextResponse.json(
-      {
-        message:
-          "Erreur lors de la récupération des statistiques du tableau de bord",
-        error:
-          process.env.NODE_ENV === "development" ? errorMessage : undefined,
-      },
-      { status: 500 }
-    );
+    currentDate.setDate(currentDate.getDate() + 1);
   }
+
+  return {
+    totalPosts,
+    publishedPosts,
+    draftPosts: totalPosts - publishedPosts,
+    newPostsThisMonth,
+    totalComments,
+    approvedComments,
+    pendingComments: totalComments - approvedComments,
+    newCommentsThisMonth,
+    totalCategories,
+    totalTags,
+    postsGrowthRate,
+    approvalRate,
+    charts: chartData,
+    popularPosts: popularPosts.map((post) => ({
+      id: post.id,
+      title: post.title,
+      slug: post.slug,
+      commentsCount: post._count.comments,
+    })),
+  };
 }

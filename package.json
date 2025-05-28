@@ -7,7 +7,7 @@
   "author": "Joe-Itax <josephitakala18@gmail.com>",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "npx prisma generate && next build",
     "start": "next start",
     "lint": "next lint"
   },
