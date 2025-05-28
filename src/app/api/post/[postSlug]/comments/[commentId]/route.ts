@@ -10,7 +10,7 @@ import { requireRole } from "@/lib/middlewares/require-role";
  */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { commentId: string } }
+  { params }: { params: { postSlug: string; commentId: string } }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user)
