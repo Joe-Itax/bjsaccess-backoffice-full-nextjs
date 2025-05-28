@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { removeAccents } from "@/utils/user-utils";
 import { paginationQuery } from "@/utils/pagination";
-import { Role } from "@/generated/prisma";
+import { Role } from "@prisma/client";
 
 interface UserWithPostCount {
   id: string;

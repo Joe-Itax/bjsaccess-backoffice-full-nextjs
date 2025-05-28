@@ -1,4 +1,4 @@
-import { Role } from "@/generated/prisma";
+import { Role } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { requireRole } from "@/lib/middlewares/require-role";
 import { prisma } from "@/lib/prisma";
