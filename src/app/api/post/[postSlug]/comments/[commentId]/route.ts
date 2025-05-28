@@ -9,15 +9,11 @@ import { requireRole } from "@/lib/middlewares/require-role";
  * @description Moderate a comment (approve/reject)
  */
 
-type Context = {
-  params: {
-    postSlug: string;
-    commentId: string;
-  };
-};
-
-export async function PUT(req: NextRequest, context: Context) {
-  const { commentId } = context.params;
+export async function PUT(
+  req: NextRequest,
+  context: { params: Promise<{ postSlug: string; commentId: string }> }
+) {
+  const { commentId } = await context.params;
 
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user)
@@ -87,11 +83,14 @@ export async function PUT(req: NextRequest, context: Context) {
  * @route DELETE /api/post/:postId/comments/:commentId
  * @description Delete a comment (admin only)
  */
-export async function DELETE(req: NextRequest, context: Context) {
+export async function DELETE(
+  req: NextRequest,
+  context: { params: Promise<{ postSlug: string; commentId: string }> }
+) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user)
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
-  const { commentId } = context.params;
+  const { commentId } = await context.params;
 
   const notAllowed = await requireRole("ADMIN");
   if (notAllowed) return notAllowed;
