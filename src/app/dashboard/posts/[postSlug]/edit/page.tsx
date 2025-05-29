@@ -185,6 +185,9 @@ export default function UpdatePostPage() {
               onChange={handleFileChange}
               className="w-full p-2 border border-gray-300 rounded cursor-pointer"
             />
+            {errors.featuredImage && (
+              <p className="text-red-500 text-sm">{errors.featuredImage}</p>
+            )}
           </div>
 
           <div className="space-y-2">

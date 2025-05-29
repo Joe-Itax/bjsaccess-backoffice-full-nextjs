@@ -10,10 +10,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "bjsaccess.onrender.com",
+        hostname: "u9zvekpkpxdgiv9o.public.blob.vercel-storage.com",
       },
     ],
-    domains: ['localhost'],
+    domains: ["localhost"],
   },
 };
 

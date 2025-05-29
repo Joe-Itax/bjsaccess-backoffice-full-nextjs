@@ -13,7 +13,9 @@ export async function handleUpload({
   filenamePrefix: string;
 }): Promise<string> {
   const ext = mime.getExtension(file.type) || "bin";
-  const filename = `${filenamePrefix}-${Date.now()}.${ext}`;
+  const filename = `${filenamePrefix}-${new Date()
+    .toISOString()
+    .replace(/[:.]/g, "-")}.${ext}`;
 
   const blobPath = `uploads/${folder}/${filename}`;
 

@@ -129,7 +129,9 @@ export async function PUT(
 
   const { postSlug } = await context.params;
 
-  let tempImagePath: string | null = null;
+  // Temporary path for cleanup in case of an error during file upload but before DB update
+  let tempUploadedImagePath: string | null = null;
+  let oldImagePathToDelete: string | null = null;
 
   try {
     const formData = await req.formData();
@@ -158,124 +160,151 @@ export async function PUT(
     }
 
     let featuredImagePath: string | undefined;
-    let oldImagePathToDelete: string | null = null;
 
-    const updatedPost = await prisma.$transaction(async (tx) => {
-      const existingPost = await tx.post.findUnique({
+    // --- Start: File upload ---
+    if (featuredImageFile && featuredImageFile.size > 0) {
+      // First, find the existing post to get its ID for the filename prefix
+      const existingPostForUpload = await prisma.post.findUnique({
         where: { slug: postSlug },
-        include: { author: true, tags: true },
+        select: { id: true, featuredImage: true, title: true, slug: true },
       });
 
-      if (!existingPost) {
-        throw new Error("Article non trouvé");
+      if (!existingPostForUpload) {
+        return NextResponse.json(
+          { message: "Article non trouvé" },
+          { status: 404 }
+        );
       }
 
-      if (categoryId) {
-        const category = await tx.category.findUnique({
-          where: { id: categoryId },
+      // Store the old image path to delete later
+      if (existingPostForUpload.featuredImage) {
+        oldImagePathToDelete = existingPostForUpload.featuredImage;
+      }
+
+      // Generate a new slug for the filename prefix if title is changing, otherwise use existing.
+      const newSlugForUpload =
+        title && title !== existingPostForUpload.title
+          ? await generateUniqueSlug(title, "post")
+          : existingPostForUpload.slug;
+
+      const prefix = `featured-${existingPostForUpload.id}-${newSlugForUpload}`;
+      featuredImagePath = await handleUpload({
+        file: featuredImageFile,
+        folder: "featured-images",
+        filenamePrefix: prefix,
+      });
+      tempUploadedImagePath = featuredImagePath;
+    }
+
+    // --- End: File upload ---
+    const updatedPost = await prisma.$transaction(
+      async (tx) => {
+        const existingPost = await tx.post.findUnique({
+          where: { slug: postSlug },
+          include: { author: true, tags: true },
         });
-        if (!category) {
-          throw new Error("Catégorie non trouvée");
-        }
-      }
 
-      let finalTagIds: string[] = [];
-      if (content && content !== existingPost.content) {
-        const extractedTags = new Set<string>();
-        const hashtagRegex = /#(\w+)/g;
-
-        const tempContentForRegex = content;
-        let match;
-        while ((match = hashtagRegex.exec(tempContentForRegex)) !== null) {
-          if (match.index === hashtagRegex.lastIndex) {
-            hashtagRegex.lastIndex++;
-          }
-          extractedTags.add(match[1]);
+        if (!existingPost) {
+          throw new Error("Article non trouvé");
         }
 
-        for (const tagName of extractedTags) {
-          let tag = await tx.tag.findUnique({
-            where: { name: tagName },
+        if (categoryId) {
+          const category = await tx.category.findUnique({
+            where: { id: categoryId },
           });
-
-          if (!tag) {
-            tag = await tx.tag.create({
-              data: { name: tagName, slug: removeAccents(tagName) },
-            });
+          if (!category) {
+            throw new Error("Catégorie non trouvée");
           }
-          finalTagIds.push(tag.id);
         }
 
-        for (const tagName of extractedTags) {
-          const replaceRegex = new RegExp(`#(${tagName})\\b`, "g");
-          content = content.replace(
-            replaceRegex,
-            `<span class="tiptap-tag">#$1</span>`
-          );
+        let finalTagIds: string[] = [];
+        if (content && content !== existingPost.content) {
+          const extractedTags = new Set<string>();
+          const hashtagRegex = /#(\w+)/g;
+
+          // Use a copy of content for regex execution to avoid issues with `lastIndex`
+          const tempContentForRegex = content;
+          let match;
+          while ((match = hashtagRegex.exec(tempContentForRegex)) !== null) {
+            extractedTags.add(match[1]);
+          }
+
+          for (const tagName of extractedTags) {
+            let tag = await tx.tag.findUnique({
+              where: { name: tagName },
+            });
+
+            if (!tag) {
+              tag = await tx.tag.create({
+                data: { name: tagName, slug: removeAccents(tagName) },
+              });
+            }
+            finalTagIds.push(tag.id);
+          }
+
+          // Apply formatting to content if tags were extracted
+          for (const tagName of extractedTags) {
+            const replaceRegex = new RegExp(`#(${tagName})\\b`, "g");
+            content = content.replace(
+              replaceRegex,
+              `<span class="tiptap-tag">#$1</span>`
+            );
+          }
+        } else {
+          // If content didn't change, preserve existing tags
+          finalTagIds = existingPost.tags.map((t) => t.tagId);
         }
-      } else {
-        finalTagIds = existingPost.tags.map((t) => t.tagId);
-      }
 
-      let newSlug = existingPost.slug;
-      let newSearchableTitle = existingPost.searchableTitle;
-      if (title && title !== existingPost.title) {
-        newSlug = await generateUniqueSlug(title, "post");
-        newSearchableTitle = removeAccents(title);
-      }
-
-      if (featuredImageFile && featuredImageFile.size > 0) {
-        if (existingPost.featuredImage) {
-          oldImagePathToDelete = existingPost.featuredImage;
+        let newSlug = existingPost.slug;
+        let newSearchableTitle = existingPost.searchableTitle;
+        if (title && title !== existingPost.title) {
+          newSlug = await generateUniqueSlug(title, "post");
+          newSearchableTitle = removeAccents(title);
         }
-        const prefix = `featured-${existingPost.id}-${
-          newSlug || existingPost.slug
-        }`;
-        featuredImagePath = await handleUpload({
-          file: featuredImageFile,
-          folder: "featured-images",
-          filenamePrefix: prefix,
-        });
-        tempImagePath = featuredImagePath;
-      }
 
-      const updateData: Prisma.PostUpdateInput = {
-        title: title ?? existingPost.title,
-        slug: newSlug,
-        content: content ?? existingPost.content,
-        category: categoryId ? { connect: { id: categoryId } } : undefined,
-        published: published ?? existingPost.published,
-        searchableTitle: newSearchableTitle,
-        featuredImage: featuredImagePath ?? existingPost.featuredImage,
-      };
-
-      await tx.tagsOnPosts.deleteMany({
-        where: { postId: existingPost.id },
-      });
-      if (finalTagIds.length > 0) {
-        updateData.tags = {
-          create: finalTagIds.map((tagId) => ({ tagId })),
+        const updateData: Prisma.PostUpdateInput = {
+          title: title ?? existingPost.title,
+          slug: newSlug,
+          content: content ?? existingPost.content,
+          category: categoryId ? { connect: { id: categoryId } } : undefined,
+          published: published ?? existingPost.published,
+          searchableTitle: newSearchableTitle,
+          featuredImage: featuredImagePath ?? existingPost.featuredImage,
         };
-      }
 
-      return await tx.post.update({
-        where: { slug: postSlug },
-        data: updateData,
-        include: {
-          category: true,
-          tags: { include: { tag: true } },
-          author: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
+        await tx.tagsOnPosts.deleteMany({
+          where: { postId: existingPost.id },
+        });
+        if (finalTagIds.length > 0) {
+          updateData.tags = {
+            create: finalTagIds.map((tagId) => ({ tagId })),
+          };
+        }
+
+        return await tx.post.update({
+          where: { slug: postSlug },
+          data: updateData,
+          include: {
+            category: true,
+            tags: { include: { tag: true } },
+            author: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
             },
+            comments: true,
           },
-          comments: true,
-        },
-      });
-    });
+        });
+      },
+      {
+        maxWait: 10000, // Temps max d'attente (10s)
+        timeout: 10000, // Timeout de la transaction (10s)
+      }
+    );
 
+    // --- Start: File deletion ---
     if (oldImagePathToDelete) {
       try {
         await deleteFileFromVercelBlob(oldImagePathToDelete);
@@ -286,6 +315,7 @@ export async function PUT(
         );
       }
     }
+    // --- End: File deletion ---
 
     const responsePost = {
       ...updatedPost,
@@ -296,9 +326,10 @@ export async function PUT(
   } catch (error) {
     console.error("Erreur lors de la mise à jour de l'article:", error);
 
-    if (tempImagePath) {
+    // If an image was uploaded but the DB transaction failed, clean up the uploaded image
+    if (tempUploadedImagePath) {
       try {
-        await deleteFileFromVercelBlob(tempImagePath);
+        await deleteFileFromVercelBlob(tempUploadedImagePath);
       } catch (unlinkError) {
         console.error(
           "Échec de la suppression de l'image temporaire après erreur de mise à jour:",
@@ -316,7 +347,7 @@ export async function PUT(
       if ((error as { code: string }).code === "P2002") {
         return NextResponse.json(
           { message: "Un article avec ce titre/slug existe déjà." },
-          { status: 400 }
+          { status: 409 } // 409 Conflict is more appropriate for unique constraint
         );
       }
       if ((error as { code: string }).code === "P2025") {
@@ -328,22 +359,16 @@ export async function PUT(
     }
 
     if (error instanceof Error) {
+      if (error.message === "Article non trouvé") {
+        return NextResponse.json({ message: error.message }, { status: 404 });
+      }
       if (
-        [
-          "Article non trouvé",
-          "Vous n'êtes pas autorisé à modifier cet article.",
-          "Catégorie non trouvée",
-        ].includes(error.message)
+        error.message === "Vous n'êtes pas autorisé à modifier cet article."
       ) {
-        const status = error.message.includes("non trouvé")
-          ? 404
-          : error.message.includes("autorisé")
-          ? 403
-          : 400;
-        return NextResponse.json(
-          { message: error.message },
-          { status: status }
-        );
+        return NextResponse.json({ message: error.message }, { status: 403 });
+      }
+      if (error.message === "Catégorie non trouvée") {
+        return NextResponse.json({ message: error.message }, { status: 400 });
       }
       return NextResponse.json(
         {
@@ -380,38 +405,63 @@ export async function DELETE(
   const { postSlug } = await context.params;
   const authenticatedUser = session.user;
 
+  // Store the image path to delete *after* the transaction
+  let featuredImagePathToDelete: string | null = null;
+
   try {
-    await prisma.$transaction(async (tx) => {
-      const post = await tx.post.findUnique({
-        where: { slug: postSlug },
-        include: { author: true },
-      });
-
-      if (!post) {
-        throw new Error("Article non trouvé");
-      }
-      if (
-        authenticatedUser?.id !== post.authorId &&
-        authenticatedUser?.role !== "ADMIN"
-      ) {
-        throw new Error("Vous n'êtes pas autorisé à éffectué cette action.");
-      }
-
-      if (post.featuredImage) {
-        try {
-          await deleteFileFromVercelBlob(post.featuredImage);
-        } catch (unlinkError) {
-          console.error(
-            "Erreur lors de la suppression de l'image à la une:",
-            unlinkError
-          );
-        }
-      }
-
-      await tx.comment.deleteMany({ where: { postId: post.id } });
-      await tx.tagsOnPosts.deleteMany({ where: { postId: post.id } });
-      await tx.post.delete({ where: { slug: postSlug } });
+    const post = await prisma.post.findUnique({
+      where: { slug: postSlug },
+      select: { id: true, authorId: true, featuredImage: true },
     });
+
+    if (!post) {
+      return NextResponse.json(
+        { message: "Article non trouvé" },
+        { status: 404 }
+      );
+    }
+
+    if (
+      authenticatedUser?.id !== post.authorId &&
+      authenticatedUser?.role !== "ADMIN"
+    ) {
+      return NextResponse.json(
+        { message: "Vous n'êtes pas autorisé à effectuer cette action." },
+        { status: 403 }
+      );
+    }
+
+    // Store the featured image path
+    if (post.featuredImage) {
+      featuredImagePathToDelete = post.featuredImage;
+    }
+
+    // Perform all database operations within the transaction
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.comment.deleteMany({ where: { postId: post.id } });
+        await tx.tagsOnPosts.deleteMany({ where: { postId: post.id } });
+        await tx.post.delete({ where: { slug: postSlug } });
+      },
+      {
+        maxWait: 10000, // Temps max d'attente (10s)
+        timeout: 10000, // Timeout de la transaction (10s)
+      }
+    );
+
+    // --- Start: File deletion ---
+    if (featuredImagePathToDelete) {
+      try {
+        await deleteFileFromVercelBlob(featuredImagePathToDelete);
+      } catch (unlinkError) {
+        console.error(
+          "Erreur lors de la suppression de l'image à la une:",
+          unlinkError
+        );
+        // Log the error but don't block the response, as the DB update was successful.
+      }
+    }
+    // --- End: File deletion ---
 
     return NextResponse.json(
       { message: "Article supprimé avec succès." },
@@ -428,28 +478,34 @@ export async function DELETE(
       (error as { code: string }).code === "P2025"
     ) {
       return NextResponse.json(
-        { message: "Post not found or already deleted." },
+        { message: "Article non trouvé ou déjà supprimé." },
         { status: 404 }
       );
     }
 
     if (error instanceof Error) {
-      if (error.message === "Post not found") {
+      if (error.message === "Article non trouvé") {
         return NextResponse.json({ message: error.message }, { status: 404 });
       }
-      if (error.message === "Unauthorized to delete this post") {
+      if (
+        error.message === "Vous n'êtes pas autorisé à effectuer cette action."
+      ) {
         return NextResponse.json({ message: error.message }, { status: 403 });
       }
       return NextResponse.json(
         {
-          message: error.message || "Erreur lors de la suppresion de l'article",
+          message:
+            error.message || "Erreur lors de la suppression de l'article.",
         },
         { status: 500 }
       );
     }
 
     return NextResponse.json(
-      { message: "An unknown error occurred while deleting the post." },
+      {
+        message:
+          "Une erreur inconnue est survenue lors de la suppression de l'article.",
+      },
       { status: 500 }
     );
   }

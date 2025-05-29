@@ -130,7 +130,7 @@ export default function PostDetailsPage() {
                 <CircleOffIcon className="text-red-500 mr-1" size={25} />
               )}
               <h3 className="text-lg font-semibold">
-                Status: <span>Publié</span>
+                Status: <span>{post.published ? "Publié" : "Non publié"}</span>
               </h3>
               {post.published ? (
                 <Button
@@ -178,7 +178,7 @@ export default function PostDetailsPage() {
               {post.category.name}
             </span>
           </div>
-          <div className="w-full h-72 overflow-hidden">
+          <div className="w-full h-96 overflow-hidden">
             <Image
               src={`${post.featuredImage}`}
               width={800}
