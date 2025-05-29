@@ -5,7 +5,6 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    // Optimisation des requêtes Prisma
     const stats = await getDashboardStats();
 
     return NextResponse.json(stats);

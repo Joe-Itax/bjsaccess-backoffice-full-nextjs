@@ -4,19 +4,27 @@ import { useCategoriesQuery } from "@/hooks/use-posts";
 import AddCategory from "./add-category";
 import DeleteCategory from "./delete-category";
 import { Category } from "@/types/posts";
-import Spinner from "@/components/spinner";
+import DataStatusDisplay from "../components/data-status-display";
 export default function CategoriesPage() {
-  const { data: categories = [], isPending } = useCategoriesQuery();
+  const {
+    data: categories = [],
+    isPending,
+    isError,
+    error,
+    refetch,
+  } = useCategoriesQuery();
 
-  if (isPending) {
+  if (isPending || isError) {
     return (
-      <div className="w-full py-64 flex justify-center items-center">
-        <div className="flex gap-4 items-center">
-          Chargement... <Spinner />
-        </div>
-      </div>
+      <DataStatusDisplay
+        isPending={isPending}
+        hasError={isError}
+        errorObject={error}
+        refetch={refetch}
+      />
     );
   }
+
   return (
     <section className="container max-w-[55rem] size-full mx-auto">
       <div className="w-full p-4 flex flex-col gap-6">
@@ -46,6 +54,14 @@ export default function CategoriesPage() {
               </li>
             </div>
           ))}
+
+          {categories?.length === 0 && (
+            <div className="w-full flex justify-center items-center">
+              <p className="text-gray-500 text-sm">
+                Aucune catégorie disponible pour le moment
+              </p>
+            </div>
+          )}
         </ol>
       </div>
     </section>

@@ -4,38 +4,31 @@ import { useParams, useRouter } from "next/navigation";
 import { useUserQuery } from "@/hooks/use-users";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CircleAlertIcon, MoveLeftIcon } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { MoveLeftIcon } from "lucide-react";
 import DeleteUser from "../../components/delete-user";
 import UpdateUserByAdmin from "../../components/update-user";
 import PostCard from "../../components/post-card";
+import DataStatusDisplay from "../../components/data-status-display";
 
 export default function UserDetailsPage() {
   const { userId } = useParams();
   const router = useRouter();
   const {
     data: user,
-    isLoading,
+    isPending,
     isError,
+    error,
     refetch,
   } = useUserQuery(userId as string);
 
-  if (isLoading) return <LoadingSkeleton />;
-
-  if (isError || !user) {
+  if (isPending || isError) {
     return (
-      <div className="flex flex-col items-center justify-center space-y-4 p-8 text-center">
-        <CircleAlertIcon className="text-destructive" size={48} />
-        <h3 className="text-xl font-semibold">Erreur de chargement</h3>
-        <p className="text-muted-foreground">{isError}</p>
-        <Button
-          onClick={async () => {
-            await refetch();
-          }}
-        >
-          Réessayer
-        </Button>
-      </div>
+      <DataStatusDisplay
+        isPending={isPending}
+        hasError={isError}
+        errorObject={error}
+        refetch={refetch}
+      />
     );
   }
 
@@ -101,29 +94,6 @@ export default function UserDetailsPage() {
             <p>Aucun Post disponible</p>
           </div>
         )}
-      </div>
-    </section>
-  );
-}
-
-function LoadingSkeleton() {
-  return (
-    <section className="p-6 sm:min-w-xs max-w-full mx-auto space-y-6">
-      <div className="flex items-center gap-4">
-        <Skeleton className="h-10 w-10 rounded-md" />
-        <Skeleton className="h-8 w-64 rounded-md" />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="space-y-2">
-            <Skeleton className="h-6 w-32 rounded-md" />
-            <Skeleton className="h-4 w-full rounded-md" />
-          </div>
-        ))}
-      </div>
-      <div className="flex flex-col items-center justify-center space-y-2">
-        <Skeleton className="h-16 w-32 rounded-md" />
-        <Skeleton className="h-4 w-24 rounded-md" />
       </div>
     </section>
   );

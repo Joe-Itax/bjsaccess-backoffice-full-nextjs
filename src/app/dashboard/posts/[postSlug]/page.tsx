@@ -13,7 +13,6 @@ import {
 import {
   CalendarIcon,
   CheckCircleIcon,
-  CircleAlertIcon,
   CircleOffIcon,
   MoveLeftIcon,
   PencilLineIcon,
@@ -29,8 +28,7 @@ import {
 } from "@/hooks/use-posts";
 import { Comment } from "@/types/posts";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-
+import DataStatusDisplay from "../../components/data-status-display";
 import DeletePost from "../../components/delete-post";
 
 // --- Tiptap Node Styles (from simple-editor.tsx) ---
@@ -40,7 +38,7 @@ export default function PostDetailsPage() {
   const { postSlug } = useParams();
   const router = useRouter();
 
-  const { data, isLoading, isError, refetch } = usePostByIdQuery(
+  const { data, isPending, isError, error, refetch } = usePostByIdQuery(
     postSlug as string
   );
   const post = data?.post;
@@ -67,24 +65,14 @@ export default function PostDetailsPage() {
     });
   };
 
-  if (isLoading) return <LoadingSkeleton />;
-
-  if (isError || !post) {
+  if (isError || !post || isPending) {
     return (
-      <div className="flex flex-col items-center justify-center space-y-4 p-8 text-center">
-        <CircleAlertIcon className="text-destructive" size={48} />
-        <h3 className="text-xl font-semibold">
-          {isError} Erreur de chargement
-        </h3>
-        <p className="text-muted-foreground">{isError}</p>
-        <Button
-          onClick={async () => {
-            await refetch();
-          }}
-        >
-          Réessayer
-        </Button>
-      </div>
+      <DataStatusDisplay
+        isPending={isPending}
+        hasError={isError}
+        errorObject={error}
+        refetch={refetch}
+      />
     );
   }
 
@@ -239,29 +227,6 @@ export default function PostDetailsPage() {
             ))}
           </div>
         </div>
-      </div>
-    </section>
-  );
-}
-
-function LoadingSkeleton() {
-  return (
-    <section className="p-6 sm:min-w-xs max-w-full mx-auto space-y-6">
-      <div className="flex items-center gap-4">
-        <Skeleton className="h-10 w-10 rounded-md" />
-        <Skeleton className="h-8 w-64 rounded-md" />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="space-y-2">
-            <Skeleton className="h-6 w-32 rounded-md" />
-            <Skeleton className="h-4 w-full rounded-md" />
-          </div>
-        ))}
-      </div>
-      <div className="flex flex-col items-center justify-center space-y-2">
-        <Skeleton className="h-16 w-32 rounded-md" />
-        <Skeleton className="h-4 w-24 rounded-md" />
       </div>
     </section>
   );

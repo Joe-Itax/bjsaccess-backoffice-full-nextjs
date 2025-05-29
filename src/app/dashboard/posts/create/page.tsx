@@ -9,6 +9,7 @@ import { Category } from "@/types/posts";
 import Spinner from "@/components/spinner";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
 import { useRouter } from "next/navigation";
+import DataStatusDisplay from "../../components/data-status-display";
 
 type PostFormData = {
   title: string;
@@ -21,8 +22,13 @@ type PostFormErrors = {
 };
 
 export default function CreatePost() {
-  const { data: categories = [], isPending: catIsPending } =
-    useCategoriesQuery();
+  const {
+    data: categories = [],
+    isPending: catIsPending,
+    isError: catIsError,
+    error: catError,
+    refetch: refetchCat,
+  } = useCategoriesQuery();
   const router = useRouter();
   const [formData, setFormData] = useState<PostFormData>({
     title: "",
@@ -102,13 +108,14 @@ export default function CreatePost() {
     setErrors((prev) => ({ ...prev, featuredImage: undefined }));
   };
 
-  if (catIsPending) {
+  if (catIsError || catIsPending) {
     return (
-      <div className="w-full py-64 flex justify-center items-center">
-        <div className="flex gap-4 items-center">
-          Chargement... <Spinner />
-        </div>
-      </div>
+      <DataStatusDisplay
+        isPending={catIsPending}
+        hasError={catIsError}
+        errorObject={catError}
+        refetch={refetchCat}
+      />
     );
   }
 

@@ -66,7 +66,6 @@ import {
   useDeactivateUserMutation,
 } from "@/hooks/use-users";
 import LoadingDataTable from "./loading";
-import ErrorThenRefresh from "./error";
 
 import type { User } from "@/types/user";
 import { Label } from "@/components/ui/label";
@@ -92,6 +91,7 @@ import AddUser from "../users/add-user";
 import DeactiveUser from "./deactive-user";
 import ReactiveUser from "./reactive-user";
 import Spinner from "@/components/spinner";
+import DataStatusDisplay from "./data-status-display";
 
 const columns: ColumnDef<User>[] = [
   {
@@ -244,8 +244,10 @@ export default function UsersDataTable() {
 
   const {
     data: usersData,
-    isLoading,
+    isPending,
     isError,
+    error,
+    refetch,
     pagination,
     setPage,
     setPageSize,
@@ -306,39 +308,19 @@ export default function UsersDataTable() {
     },
   });
 
-  // const selectedRoles = useMemo(() => {
-  //   const filterValue = table.getColumn("role")?.getFilterValue() as string[];
-  //   return filterValue ?? [];
-  // }, [table.getColumn("role")?.getFilterValue()]);
-
-  /*const handleFilterChange = (
-    columnId: string,
-    checked: boolean,
-    value: string
-  ) => {
-    const filterValue = table.getColumn(columnId)?.getFilterValue() as string[];
-    const newFilterValue = filterValue ? [...filterValue] : [];
-
-    if (checked) {
-      newFilterValue.push(value);
-    } else {
-      const index = newFilterValue.indexOf(value);
-      if (index > -1) {
-        newFilterValue.splice(index, 1);
-      }
-    }
-
-    table
-      .getColumn(columnId)
-      ?.setFilterValue(newFilterValue.length ? newFilterValue : undefined);
-  };*/
-
-  if (isLoading && users.length === 0) {
+  if (isPending && users.length === 0) {
     return <LoadingDataTable />;
   }
 
-  if (isError) {
-    return <ErrorThenRefresh />;
+  if (isPending || isError) {
+    return (
+      <DataStatusDisplay
+        isPending={isPending}
+        hasError={isError}
+        errorObject={error}
+        refetch={refetch}
+      />
+    );
   }
 
   return (

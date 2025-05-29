@@ -4,12 +4,22 @@ import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import EditProfile from "./edit-profile";
 import { Separator } from "@/components/ui/separator";
+import DataStatusDisplay from "../components/data-status-display";
 
 export default function ProfilePage() {
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending, error, refetch } = authClient.useSession();
   const user = session?.user;
-  if (!user) {
-    return <div>Chargement du profil...</div>;
+  const hasAuthError = !!error;
+
+  if (hasAuthError || isPending || !user) {
+    return (
+      <DataStatusDisplay
+        isPending={isPending}
+        hasError={hasAuthError}
+        errorObject={error}
+        refetch={refetch}
+      />
+    );
   }
 
   const avatarFallback = user?.name
@@ -18,8 +28,6 @@ export default function ProfilePage() {
     .join("");
 
   const avatarImage = user.image ? user.image : "/placeholder-avatar.png";
-
-  console.log("user: ", user);
 
   return (
     <div className="w-full mx-auto p-6 space-y-8">

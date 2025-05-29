@@ -1,35 +1,26 @@
 "use client";
 
-import {
-  // useCategoriesQuery,
-  usePostsQuery,
-  // useTagsQuery,
-} from "@/hooks/use-posts";
+import { usePostsQuery } from "@/hooks/use-posts";
 import PostCard from "../components/post-card";
 import { Post } from "@/types/posts";
-// import CreatePost from "../components/create-post";
-import Spinner from "@/components/spinner";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
-// import Link from "next/link";
 import { useRouter } from "next/navigation";
+import DataStatusDisplay from "../components/data-status-display";
 
 export default function PostsPage() {
-  const { data: posts, isPending, isError, refetch } = usePostsQuery();
+  const { data: posts, isPending, isError, error, refetch } = usePostsQuery();
   const router = useRouter();
 
-  if (isPending) {
+  if (isError || isPending) {
     return (
-      <div className="w-full py-64 flex justify-center items-center">
-        <div className="flex gap-4 items-center">
-          Chargement... <Spinner />
-        </div>
-      </div>
+      <DataStatusDisplay
+        isPending={isPending}
+        hasError={isError}
+        errorObject={error}
+        refetch={refetch}
+      />
     );
-  }
-
-  if (isError) {
-    refetch();
   }
 
   return (

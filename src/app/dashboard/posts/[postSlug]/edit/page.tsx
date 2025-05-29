@@ -13,6 +13,7 @@ import Spinner from "@/components/spinner";
 import { useParams, useRouter } from "next/navigation";
 import { MoveLeftIcon } from "lucide-react";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
+import DataStatusDisplay from "@/app/dashboard/components/data-status-display";
 
 type PostFormData = {
   title: string;
@@ -25,10 +26,20 @@ export default function UpdatePostPage() {
   const { postSlug } = useParams();
   const router = useRouter();
 
-  const { data: categories, isPending: catIsPending } = useCategoriesQuery();
-  const { data, isPending: postIsPending } = usePostByIdQuery(
-    postSlug as string
-  );
+  const {
+    data: categories,
+    isPending: catIsPending,
+    isError: catIsError,
+    error: catError,
+    refetch: refetchCat,
+  } = useCategoriesQuery();
+  const {
+    data,
+    isPending: postIsPending,
+    isError: postIsError,
+    error: postError,
+    refetch: refetchPost,
+  } = usePostByIdQuery(postSlug as string);
   const post = data?.post;
   const { mutateAsync: updatePostMutation, isPending } =
     useUpdatePostMutation();
@@ -122,13 +133,14 @@ export default function UpdatePostPage() {
     }));
   };
 
-  if (catIsPending || postIsPending || !post) {
+  if (catIsPending || postIsPending || !post || catIsError || postIsError) {
     return (
-      <div className="w-full py-64 flex justify-center items-center">
-        <div className="flex gap-4 items-center">
-          Chargement... <Spinner />
-        </div>
-      </div>
+      <DataStatusDisplay
+        isPending={catIsPending || postIsPending}
+        hasError={catIsError || postIsError}
+        errorObject={catError || postError}
+        refetch={refetchCat || refetchPost}
+      />
     );
   }
 

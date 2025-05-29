@@ -5,6 +5,7 @@ import { SectionCards } from "@/components/section-cards";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardStatsQuery } from "@/hooks/use-dashboard-overview";
 import { DashboardStats } from "@/types/dashboard-stat";
+import DataStatusDisplay from "./components/data-status-display";
 
 const defaultStats: DashboardStats = {
   totalPosts: 0,
@@ -23,22 +24,39 @@ const defaultStats: DashboardStats = {
 };
 
 export default function DashboardPage() {
-  const { data: stats = defaultStats } = useDashboardStatsQuery();
+  const {
+    data: stats = defaultStats,
+    isPending,
+    isError,
+    error,
+    refetch,
+  } = useDashboardStatsQuery();
+
+  if (isPending || !stats.charts.length) {
+    return (
+      <>
+        <Loading />
+      </>
+    );
+  }
+
+  if (isPending || isError) {
+    return (
+      <DataStatusDisplay
+        isPending={isPending}
+        hasError={isError}
+        errorObject={error}
+        refetch={refetch}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-      {!stats.charts.length ? (
-        <>
-          <Loading />
-        </>
-      ) : (
-        <>
-          <SectionCards stats={stats} />
-
-          <div className="px-4 lg:px-6">
-            <ChartAreaInteractive data={stats.charts} />
-          </div>
-        </>
-      )}
+      <SectionCards stats={stats} />
+      <div className="px-4 lg:px-6">
+        <ChartAreaInteractive data={stats.charts} />
+      </div>
     </div>
   );
 }

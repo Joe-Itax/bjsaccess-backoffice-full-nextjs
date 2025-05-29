@@ -4,19 +4,27 @@ import { useTagsQuery } from "@/hooks/use-posts";
 import { Tag } from "@/types/posts";
 import AddTag from "./add-tag";
 import DeleteTag from "./delete-tag";
-import Spinner from "@/components/spinner";
+import DataStatusDisplay from "../components/data-status-display";
 export default function TagsPage() {
-  const { data: tags = [], isPending } = useTagsQuery();
+  const {
+    data: tags = [],
+    isPending,
+    isError,
+    error,
+    refetch,
+  } = useTagsQuery();
 
-  if (isPending) {
+  if (isPending || isError) {
     return (
-      <div className="w-full py-64 flex justify-center items-center">
-        <div className="flex gap-4 items-center">
-          Chargement... <Spinner />
-        </div>
-      </div>
+      <DataStatusDisplay
+        isPending={isPending}
+        hasError={isError}
+        errorObject={error}
+        refetch={refetch}
+      />
     );
   }
+
   return (
     <section className="container max-w-[55rem] size-full mx-auto">
       <div className="w-full p-4 flex flex-col gap-6">
