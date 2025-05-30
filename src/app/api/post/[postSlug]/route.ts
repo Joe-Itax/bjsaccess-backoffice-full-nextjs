@@ -33,7 +33,7 @@ export async function GET(
         title: true,
         slug: true,
         content: true,
-        published: isBackOffice,
+        published: true,
         featuredImage: true,
         createdAt: true,
         updatedAt: isBackOffice,

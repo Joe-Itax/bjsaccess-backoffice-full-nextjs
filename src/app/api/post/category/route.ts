@@ -12,9 +12,6 @@ export const config = {
 };
 
 export async function GET(req: NextRequest) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user)
-    return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
   const { searchParams } = req.nextUrl;
   const page = Number(searchParams.get("page")) || 1;
   const limit = Number(searchParams.get("limit")) || 10;
@@ -22,6 +19,19 @@ export async function GET(req: NextRequest) {
   try {
     const categories = await paginationQuery(prisma.category, page, limit, {
       orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            posts: true,
+          },
+        },
+      },
     });
 
     return NextResponse.json(categories, { status: 200 });

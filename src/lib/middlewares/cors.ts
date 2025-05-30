@@ -7,7 +7,7 @@ const allowedOrigins = [
   "https://bjsaccess.com",
   "https://bjsaccess.vercel.app",
   "https://bjsaccess-back-office.vercel.app",
-  "https://bjsaccess-backoffice.vercel.app"
+  "https://bjsaccess-backoffice.vercel.app",
 ];
 
 export function corsMiddleware(req: NextRequest) {

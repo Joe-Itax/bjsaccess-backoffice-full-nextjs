@@ -29,6 +29,9 @@ export async function GET(req: NextRequest) {
   const limit = Number(searchParams.get("limit")) || 10;
   const categorySlug = searchParams.get("category");
   const tagSlug = searchParams.get("tag");
+  const search = searchParams.get("search");
+  let searchTerm: string = "";
+  if (search) searchTerm = removeAccents(search.trim());
 
   const isBackOffice = session?.user ? true : false;
 
@@ -37,14 +40,15 @@ export async function GET(req: NextRequest) {
       ...(!isBackOffice && { published: true }), // Only show published posts for public access
       ...(categorySlug && { category: { slug: categorySlug } }),
       ...(tagSlug && { tags: { some: { tag: { slug: tagSlug } } } }),
+      ...(search && {
+        OR: [{ title: { contains: searchTerm, mode: "insensitive" } }],
+      }),
     };
 
     const selectBase: Prisma.PostSelect = {
       id: true,
       title: true,
       slug: true,
-      // Note: `content` is often truncated for listings or retrieved in full on single post pages.
-      // For a list, you might only select a snippet or rely on the frontend to truncate.
       content: true,
       featuredImage: true,
       createdAt: true,
@@ -79,14 +83,13 @@ export async function GET(req: NextRequest) {
       published: true,
       updatedAt: true,
       comments: {
-        // Include comments with moderation details for back-office
         select: {
           id: true,
           content: true,
           visitorName: true,
-          visitorEmail: true, // Always show email in back-office
+          visitorEmail: true,
           postId: true,
-          isApproved: true, // Always show approval status in back-office
+          isApproved: true,
           createdAt: true,
         },
         orderBy: { createdAt: "desc" },
@@ -101,7 +104,7 @@ export async function GET(req: NextRequest) {
 
     const result = await paginationQuery(prisma.post, page, limit, {
       where,
-      select: finalSelect as Prisma.InputJsonValue, // Type assertion to PostSelect for complex nested select types
+      select: finalSelect as Prisma.InputJsonValue,
       orderBy: { createdAt: "desc" },
     });
 
