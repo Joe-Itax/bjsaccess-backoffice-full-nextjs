@@ -12,12 +12,25 @@ export const config = {
 };
 
 export async function GET(req: NextRequest) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const isBackOffice = session?.user ? true : false;
+
   const { searchParams } = req.nextUrl;
   const page = Number(searchParams.get("page")) || 1;
   const limit = Number(searchParams.get("limit")) || 10;
 
   try {
+    const where: Prisma.CategoryWhereInput = {};
+    if (!isBackOffice) {
+      where.posts = {
+        some: {
+          published: true,
+        },
+      };
+    }
+
     const categories = await paginationQuery(prisma.category, page, limit, {
+      where,
       orderBy: { createdAt: "asc" },
       select: {
         id: true,
@@ -26,6 +39,12 @@ export async function GET(req: NextRequest) {
         description: true,
         createdAt: true,
         updatedAt: true,
+        posts: {
+          select: {
+            id: true,
+            published: true,
+          },
+        },
         _count: {
           select: {
             posts: true,

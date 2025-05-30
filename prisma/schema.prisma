@@ -11,7 +11,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  // directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -150,4 +150,15 @@ model Verification {
   updatedAt  DateTime?
 
   @@map("verification")
+}
+
+
+model ContactMessage {
+  id        String    @id @default(uuid())
+  name      String
+  email     String
+  subject   String
+  message   String    @db.Text // Utilisation de @db.Text pour des messages potentiellement longs
+  createdAt DateTime  @default(now())
+  isRead    Boolean   @default(false)
 }
