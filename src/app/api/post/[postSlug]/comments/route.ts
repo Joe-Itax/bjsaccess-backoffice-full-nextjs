@@ -20,7 +20,6 @@ export async function GET(
   const { searchParams } = req.nextUrl;
   const page = Number(searchParams.get("page")) || 1;
   const limit = Number(searchParams.get("limit")) || 10;
-  const approvedOnly = searchParams.get("approvedOnly") === "true";
 
   try {
     // Verify that the post exists
@@ -35,9 +34,11 @@ export async function GET(
 
     const where: Prisma.CommentWhereInput = {
       postId: post.id,
-      ...(approvedOnly && !isBackOffice && { isApproved: true }), // For public view, only approved comments
-      // For back-office, show all comments for moderation regardless of `approvedOnly` query param
     };
+
+    if (!isBackOffice) {
+      where.isApproved = true;
+    }
 
     const result = await paginationQuery(prisma.comment, page, limit, {
       where,
