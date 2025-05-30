@@ -64,13 +64,13 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
   const isBackOffice = session?.user ? true : false;
   const notAllowed = await requireRole("ADMIN");
   if (notAllowed) return notAllowed;
-  const { id } = context.params;
+  const { id } = await context.params;
 
   if (!isBackOffice) {
     return NextResponse.json(
