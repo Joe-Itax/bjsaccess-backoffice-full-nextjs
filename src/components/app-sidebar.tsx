@@ -9,7 +9,7 @@ import {
   IconUsers,
   IconFileText,
   IconFolder,
-  // IconHash,
+  IconHash,
 } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -49,11 +49,11 @@ const data = {
       url: "/dashboard/users",
       icon: IconUsers,
     },
-    // {
-    //   title: "Tag",
-    //   url: "/dashboard/tags",
-    //   icon: IconHash,
-    // },
+    {
+      title: "Message",
+      url: "/dashboard/message",
+      icon: IconHash,
+    },
     {
       title: "Categories",
       url: "/dashboard/categories",
