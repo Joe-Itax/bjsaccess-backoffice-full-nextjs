@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function PUT() {
+export async function PUT(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   const isBackOffice = session?.user ? true : false;
 
@@ -129,17 +129,22 @@ export async function PUT() {
   }
 
   try {
-    const { count } = await prisma.contactMessage.updateMany({
-      where: {
-        isRead: false,
-      },
+    const formData = await req.formData();
+    const isReadReq = formData.get("isRead") as string;
+    const isRead = isReadReq === "true" ? true : false;
+
+    await prisma.contactMessage.updateMany({
       data: {
-        isRead: true,
+        isRead,
       },
     });
 
+    const state = isRead ? "lus" : "non lu";
+
     return NextResponse.json(
-      { message: `${count} messages marqués comme lus.`, updatedCount: count },
+      {
+        message: `Tous les messages marqués comme étant ${state}.`,
+      },
       { status: 200 }
     );
   } catch (error) {

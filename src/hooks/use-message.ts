@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNotification } from "./use-notification";
 import { useState } from "react";
 import { ContactMessage } from "@/types/message";
+import { useRouter } from "next/navigation";
 
 interface GetMessagesResponse {
   totalItems: number;
@@ -92,15 +93,16 @@ export function useMarkAllMessagesAsReadMutation() {
   const { show } = useNotification();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async (formData: FormData) => {
       const res = await fetch(`/api/contact`, {
         method: "PUT",
+        body: formData,
       });
       if (!res.ok) throw new Error("Erreur marquage messages");
       return res.json();
     },
-    onSuccess: () => {
-      show("success", "Messages marqués comme étant lues !");
+    onSuccess: (data) => {
+      show("success", data.message || "Messages marqués comme étant lues !");
       queryClient.invalidateQueries({ queryKey: ["messages"] });
     },
     onError: () => {
@@ -121,12 +123,43 @@ export function useMarkOneMessageAsReadMutation() {
       return res.json();
     },
     onSuccess: () => {
-      //   show("success", "Message marqué comme étant lue !");
+      show("success", "Message marqué comme étant lue !");
       queryClient.invalidateQueries({ queryKey: ["messages"] });
       queryClient.invalidateQueries({ queryKey: ["message"] });
     },
     onError: () => {
       show("error", "Erreur lors du marquage du message.");
+    },
+  });
+}
+
+export function useDeleteMessageMutation() {
+  const { show } = useNotification();
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: async ({ messageId }: { messageId:string }) => {
+      const res = await fetch(`/api/contact/${messageId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Échec de la suppression");
+      }
+
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      show("success", data.message || "Message supprimé définitivement");
+
+      // Invalider les requêtes affectées
+      queryClient.invalidateQueries({ queryKey: ["messages"] });
+      router.push("/dashboard/message");
+    },
+    onError: (error: Error) => {
+      show("error", error.message || "Erreur lors de la suppression");
     },
   });
 }
