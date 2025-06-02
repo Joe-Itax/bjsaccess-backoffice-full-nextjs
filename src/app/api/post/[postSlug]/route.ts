@@ -182,10 +182,11 @@ export async function PUT(
       }
 
       // Generate a new slug for the filename prefix if title is changing, otherwise use existing.
-      const newSlugForUpload =
-        title && title !== existingPostForUpload.title
-          ? await generateUniqueSlug(title, "post")
-          : existingPostForUpload.slug;
+      // const newSlugForUpload =
+      //   title && title !== existingPostForUpload.title
+      //     ? await generateUniqueSlug(title, "post")
+      //     : existingPostForUpload.slug;
+      const newSlugForUpload = existingPostForUpload.slug;
 
       const prefix = `featured-${existingPostForUpload.id}-${newSlugForUpload}`;
       featuredImagePath = await handleUpload({
@@ -220,9 +221,9 @@ export async function PUT(
         let finalTagIds: string[] = [];
         if (content && content !== existingPost.content) {
           const extractedTags = new Set<string>();
-          const hashtagRegex = /#(\w+)/g;
+          // const hashtagRegex = /#(\w+)/g;
+          const hashtagRegex = /#([\p{L}\p{N}_]+)/gu;
 
-          // Use a copy of content for regex execution to avoid issues with `lastIndex`
           const tempContentForRegex = content;
           let match;
           while ((match = hashtagRegex.exec(tempContentForRegex)) !== null) {
@@ -235,16 +236,21 @@ export async function PUT(
             });
 
             if (!tag) {
+              const uniqueSlug = await generateUniqueSlug(tagName, "tag");
               tag = await tx.tag.create({
-                data: { name: tagName, slug: removeAccents(tagName) },
+                data: {
+                  name: tagName,
+                  slug: uniqueSlug,
+                },
               });
             }
+            // generateUniqueSlug(tagName, "tag")
             finalTagIds.push(tag.id);
           }
 
           // Apply formatting to content if tags were extracted
           for (const tagName of extractedTags) {
-            const replaceRegex = new RegExp(`#(${tagName})\\b`, "g");
+            const replaceRegex = new RegExp(`#(${tagName})\\b`, "gu");
             content = content.replace(
               replaceRegex,
               `<span class="tiptap-tag">#$1</span>`
@@ -255,10 +261,10 @@ export async function PUT(
           finalTagIds = existingPost.tags.map((t) => t.tagId);
         }
 
-        let newSlug = existingPost.slug;
+        const newSlug = existingPost.slug;
         let newSearchableTitle = existingPost.searchableTitle;
         if (title && title !== existingPost.title) {
-          newSlug = await generateUniqueSlug(title, "post");
+          // newSlug = await generateUniqueSlug(title, "post");
           newSearchableTitle = removeAccents(title);
         }
 

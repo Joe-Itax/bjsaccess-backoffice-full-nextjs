@@ -25,7 +25,7 @@ export default function PostsPage() {
 
   return (
     <section className="container size-full mx-auto flex justify-center">
-      <div className=" px-2 md:p-8 sm:px-4">
+      <div className="py-8 px-2 md:p-8 sm:px-4">
         <div>
           <Button
             className="ml-auto"

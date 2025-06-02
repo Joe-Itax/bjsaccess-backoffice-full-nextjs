@@ -6,9 +6,14 @@ import {
   SearchIcon,
   UserIcon,
   FileTextIcon,
-  LayoutDashboardIcon,
-  TagIcon,
 } from "lucide-react";
+import {
+  IconLayoutDashboard,
+  IconUsers,
+  IconFileText,
+  IconTag,
+  IconMessage,
+} from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -39,10 +44,11 @@ interface SearchResults {
 }
 
 const navigationLinks = [
-  { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboardIcon },
-  { label: "Articles", href: "/dashboard/posts", icon: FileTextIcon },
-  { label: "Utilisateurs", href: "/dashboard/users", icon: UserIcon },
-  { label: "Catégories", href: "/dashboard/categories", icon: TagIcon },
+  { label: "Tableau de bord", href: "/dashboard", icon: IconLayoutDashboard },
+  { label: "Articles", href: "/dashboard/posts", icon: IconFileText },
+  { label: "Utilisateurs", href: "/dashboard/users", icon: IconUsers },
+  { label: "Message", href: "/dashboard/message", icon: IconMessage },
+  { label: "Catégories", href: "/dashboard/categories", icon: IconTag },
 ];
 
 export default function SearchInput() {
@@ -216,7 +222,9 @@ export default function SearchInput() {
               {searchResults.posts.map((post) => (
                 <CommandItem
                   key={post.slug}
-                  onSelect={() => handleNavigate(`/dashboard/posts/${post.slug}`)}
+                  onSelect={() =>
+                    handleNavigate(`/dashboard/posts/${post.slug}`)
+                  }
                   value={post.title.toLowerCase()}
                 >
                   <FileTextIcon

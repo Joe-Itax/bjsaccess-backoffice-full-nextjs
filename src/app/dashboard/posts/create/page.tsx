@@ -121,7 +121,7 @@ export default function CreatePost() {
 
   return (
     <section className="container size-full mx-auto flex justify-center">
-      <div className="px-4 md:p-8 sm:px-4 size-full">
+      <div className="px-4 pb-12 pt-8 md:p-8 sm:px-4 size-full">
         <Button variant="ghost" onClick={() => router.push(`/dashboard/posts`)}>
           <MoveLeftIcon />
         </Button>

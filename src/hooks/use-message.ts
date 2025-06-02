@@ -123,7 +123,7 @@ export function useMarkOneMessageAsReadMutation() {
       return res.json();
     },
     onSuccess: () => {
-      show("success", "Message marqué comme étant lue !");
+      // show("success", "Message marqué comme étant lue !");
       queryClient.invalidateQueries({ queryKey: ["messages"] });
       queryClient.invalidateQueries({ queryKey: ["message"] });
     },

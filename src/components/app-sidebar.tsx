@@ -2,14 +2,11 @@
 
 import * as React from "react";
 import {
-  // IconChartBar,
-  IconDashboard,
-  // IconFolder,
-  // IconSettings,
+  IconLayoutDashboard,
   IconUsers,
   IconFileText,
-  IconFolder,
-  IconHash,
+  IconTag,
+  IconMessage,
 } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -37,27 +34,27 @@ const data = {
     {
       title: "Dashboard",
       url: "/dashboard",
-      icon: IconDashboard,
+      icon: IconLayoutDashboard,
     },
     {
-      title: "Posts",
+      title: "Articles",
       url: "/dashboard/posts",
       icon: IconFileText,
     },
     {
-      title: "Users",
+      title: "Utilisateurs",
       url: "/dashboard/users",
       icon: IconUsers,
     },
     {
       title: "Message",
       url: "/dashboard/message",
-      icon: IconHash,
+      icon: IconMessage,
     },
     {
-      title: "Categories",
+      title: "Catégories",
       url: "/dashboard/categories",
-      icon: IconFolder,
+      icon: IconTag,
     },
   ],
   navSecondary: [

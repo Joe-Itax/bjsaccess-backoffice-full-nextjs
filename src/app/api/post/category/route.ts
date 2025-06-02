@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = req.nextUrl;
   const page = Number(searchParams.get("page")) || 1;
-  const limit = Number(searchParams.get("limit")) || 10;
+  const limit = Number(searchParams.get("limit")) || 500;
 
   try {
     const where: Prisma.CategoryWhereInput = {};
