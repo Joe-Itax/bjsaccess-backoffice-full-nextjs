@@ -35,7 +35,7 @@ export default function PostCard({ post }: PostCardProps) {
 
   return (
     <div
-      className="max-w-md size-full rounded shadow-lg bg-white hover:shadow-xl transition-shadow duration-300 relative"
+      className="max-w-md size-full rounded shadow-lg bg-white hover:shadow-xl transition-shadow duration-300 relative box-post-card"
       onMouseEnter={handleHover}
       onMouseLeave={handleHover}
     >
@@ -81,7 +81,7 @@ export default function PostCard({ post }: PostCardProps) {
         </h3>
 
         <div
-          className="text-gray-600 mb-4 line-clamp-2"
+          className="text-gray-600 mb-4 line-clamp-2 box-post-content"
           dangerouslySetInnerHTML={{ __html: post.content }}
         ></div>
 

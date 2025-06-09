@@ -227,3 +227,7 @@
     @apply bg-background text-foreground;
   }
 }
+
+.box-post-card .box-post-content img {
+  display: none;
+}

@@ -1,11 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
+import { Editor, EditorContent, EditorContext, useEditor } from "@tiptap/react";
 
 // --- Tiptap Core Extensions ---
 import { StarterKit } from "@tiptap/starter-kit";
+import { Image } from "@tiptap/extension-image";
 import { TaskItem } from "@tiptap/extension-task-item";
 import { TaskList } from "@tiptap/extension-task-list";
 import { TextAlign } from "@tiptap/extension-text-align";
@@ -30,6 +32,7 @@ import {
 } from "@/components/tiptap-ui-primitive/toolbar";
 
 // --- Tiptap Node ---
+import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension";
 import "@/components/tiptap-node/code-block-node/code-block-node.scss";
 import "@/components/tiptap-node/list-node/list-node.scss";
 import "@/components/tiptap-node/image-node/image-node.scss";
@@ -37,6 +40,7 @@ import "@/components/tiptap-node/paragraph-node/paragraph-node.scss";
 
 // --- Tiptap UI ---
 import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu";
+import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button";
 import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu";
 import { BlockQuoteButton } from "@/components/tiptap-ui/blockquote-button";
 import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button";
@@ -68,12 +72,10 @@ import { useCursorVisibility } from "@/hooks/use-cursor-visibility";
 // import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle";
 
 // --- Lib ---
-// import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"; // REMOVED
+import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
 
 // --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss";
-
-// import content from "@/components/tiptap-templates/simple/data/content.json"; // REMOVED, content will be passed as prop
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -93,7 +95,7 @@ const MainToolbarContent = ({
       </ToolbarGroup>
       <ToolbarSeparator />
       <ToolbarGroup>
-        <HeadingDropdownMenu levels={[1, 2, 3, 4]} />
+        <HeadingDropdownMenu levels={[2, 3, 4]} />
         <ListDropdownMenu types={["bulletList", "orderedList", "taskList"]} />
         <BlockQuoteButton />
         <CodeBlockButton />
@@ -124,11 +126,10 @@ const MainToolbarContent = ({
         <TextAlignButton align="right" />
         <TextAlignButton align="justify" />
       </ToolbarGroup>
-      {/* <ToolbarSeparator /> // REMOVED
+      <ToolbarSeparator />
       <ToolbarGroup>
         <ImageUploadButton text="Add" />
-      </ToolbarGroup> */}{" "}
-      {/* REMOVED */}
+      </ToolbarGroup>
       <Spacer />
       {isMobile && <ToolbarSeparator />}
       {/* <ToolbarGroup>
@@ -183,7 +184,8 @@ export function SimpleEditor({
   );
   const toolbarRef = useRef<HTMLDivElement>(null);
 
-  const editor = useEditor({
+  const editorRef = useRef<Editor | null>(null);
+  const editor: Editor | null = useEditor({
     immediatelyRender: false,
     editorProps: {
       attributes: {
@@ -193,6 +195,7 @@ export function SimpleEditor({
         "aria-label": "Main content area, start typing to enter text.",
       },
     },
+
     extensions: [
       StarterKit,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
@@ -200,21 +203,52 @@ export function SimpleEditor({
       TaskList,
       TaskItem.configure({ nested: true }),
       Highlight.configure({ multicolor: true }),
-      // Image, // REMOVED
+      Image.configure({
+        inline: true, // Pour permettre l'insertion en ligne si désiré
+        allowBase64: false, // Ne pas stocker en base64 dans le contenu HTML
+      }),
+
       Typography,
       Superscript,
       Subscript,
 
+      ImageUploadNode.configure({
+        accept: "image/*",
+        maxSize: MAX_FILE_SIZE,
+        limit: 10,
+        upload: (file, onProgress, abortSignal) => {
+          // if (editor) {
+          if (editorRef.current) {
+            return handleImageUpload(
+              editorRef.current,
+              file,
+              onProgress,
+              abortSignal
+            );
+          }
+          return Promise.reject(
+            new Error("Editor not initialized for ImageUploadNode")
+          );
+        },
+        onError: (error) => console.error("Upload failed:", error),
+      }),
       Selection,
       TrailingNode,
       Link.configure({ openOnClick: false }),
     ],
     content: initialContent,
-    onUpdate: ({ editor }) => {
-      onContentChange(editor.getHTML());
+    onUpdate: ({ editor: updatedEditor }) => {
+      editorRef.current = updatedEditor;
+      onContentChange(updatedEditor.getHTML());
     },
   });
-  // THIS IS THE NEW EFFECT TO HANDLE PROP CHANGES
+
+  useEffect(() => {
+    if (editor) {
+      editorRef.current = editor;
+    }
+  }, [editor]);
+
   useEffect(() => {
     // Ensure editor is initialized and initialContent is not null/undefined
     if (editor && initialContent !== undefined && initialContent !== null) {
@@ -236,7 +270,7 @@ export function SimpleEditor({
         editor.commands.setContent(normalizedInitialContent, false); // `false` prevents setting selection at the end
       }
     }
-  }, [editor, initialContent]); // Dependency array: re-run this effect when `editor` or `initialContent` changes
+  }, [editor, initialContent]);
 
   const bodyRect = useCursorVisibility({
     editor,

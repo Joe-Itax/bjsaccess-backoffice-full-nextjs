@@ -10,6 +10,11 @@ import {
   handleUpload,
   deleteFileFromVercelBlob,
 } from "@/lib/middlewares/upload-file";
+import {
+  processContentImages,
+  // extractImageUrls,
+} from "@/utils/process-content-images";
+import { del, list } from "@vercel/blob";
 
 export const config = {
   api: {
@@ -140,10 +145,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
   }
 
+  let featuredImagePath: string | null = null;
+  let newPostSlug: string | null = null;
+
   try {
     const formData = await req.formData();
 
-    // Validation des champs obligatoires
     const requiredFields = ["title", "content", "categoryId", "featuredImage"];
     const missingFields = requiredFields.filter(
       (field) => !formData.get(field)
@@ -164,25 +171,49 @@ export async function POST(req: NextRequest) {
     const categoryId = formData.get("categoryId") as string;
     const featuredImageFile = formData.get("featuredImage") as Blob;
 
-    // 1. Traitement de l'image
-    const slug = await generateUniqueSlug(title, "post");
-    const prefix = `featured-${Date.now()}-${slug}`;
-    const featuredImagePath = await handleUpload({
-      file: featuredImageFile,
-      folder: "featured-images",
-      filenamePrefix: prefix,
-    });
+    // Le slug est généré avant tout, car il est utilisé pour le répertoire des images
+    newPostSlug = await generateUniqueSlug(title, "post");
 
     try {
-      // 2. Extraction des tags
+      // 1. Upload de l'image à la une (featuredImage)
+      const prefix = `featured-${Date.now()}-${newPostSlug}`;
+      featuredImagePath = await handleUpload({
+        file: featuredImageFile,
+        folder: "featured-images",
+        filenamePrefix: prefix,
+      });
+
+      // 2. Créer l'article initialement SANS les images traitées de l'éditeur
+      await prisma.post.create({
+        data: {
+          title,
+          searchableTitle: removeAccents(title),
+          slug: newPostSlug,
+          content: "", // Contenu vide ou temporaire, sera mis à jour ensuite
+          authorId: session.user.id,
+          categoryId,
+          featuredImage: featuredImagePath,
+        },
+        select: { slug: true },
+      });
+
+      // 3. Traitement des images du contenu (déplacement de temp/ vers editor-images/postSlug/)
+      // C'est ici que les images sont déplacées vers le répertoire du slug de l'article
+      const { updatedHtml: processedContent } = await processContentImages(
+        content,
+        newPostSlug
+      );
+
+      // 4. Extraction et formatage des tags
       const extractedTags = new Set<string>();
-      const hashtagRegex = /#(\w+)/g;
+      const hashtagRegex = /#([\p{L}\p{N}_]+)/gu;
       let match;
-      while ((match = hashtagRegex.exec(content)) !== null) {
+      let finalContentWithTags = processedContent;
+
+      while ((match = hashtagRegex.exec(processedContent)) !== null) {
         extractedTags.add(match[1]);
       }
 
-      // 3. Recherche/création des tags
       const tagOperations = [];
       for (const tagName of extractedTags) {
         tagOperations.push(
@@ -190,7 +221,7 @@ export async function POST(req: NextRequest) {
             where: { name: tagName },
             create: {
               name: tagName,
-              slug: removeAccents(tagName),
+              slug: await generateUniqueSlug(tagName, "tag"),
             },
             update: {},
           })
@@ -199,20 +230,17 @@ export async function POST(req: NextRequest) {
       const tags = await Promise.all(tagOperations);
       const finalTagIds = tags.map((tag) => tag.id);
 
-      // 4. Formatage du contenu avec les tags
-      let formattedContent = content;
       for (const tag of tags) {
-        const replaceRegex = new RegExp(`#(${tag.name})\\b`, "g");
-        formattedContent = formattedContent.replace(
+        const replaceRegex = new RegExp(`#(${tag.name})\\b`, "gu");
+        finalContentWithTags = finalContentWithTags.replace(
           replaceRegex,
           `<span class="tiptap-tag">#$1</span>`
         );
       }
 
-      // 5. Création du post avec timeout étendu
+      // 5. Mise à jour de l'article avec le contenu traité et les tags
       const post = await prisma.$transaction(
         async (tx) => {
-          // Vérification de la catégorie
           const categoryExists = await tx.category.count({
             where: { id: categoryId },
           });
@@ -220,16 +248,10 @@ export async function POST(req: NextRequest) {
             throw new Error("Catégorie non trouvée.");
           }
 
-          // Création du post
-          return await tx.post.create({
+          return await tx.post.update({
+            where: { slug: newPostSlug! },
             data: {
-              title,
-              searchableTitle: removeAccents(title),
-              slug,
-              content: formattedContent,
-              authorId: session.user.id,
-              categoryId,
-              featuredImage: featuredImagePath,
+              content: finalContentWithTags,
               tags: {
                 create: finalTagIds.map((tagId) => ({ tagId })),
               },
@@ -242,8 +264,8 @@ export async function POST(req: NextRequest) {
           });
         },
         {
-          maxWait: 10000, // Temps max d'attente (10s)
-          timeout: 10000, // Timeout de la transaction (10s)
+          maxWait: 10000,
+          timeout: 10000,
         }
       );
 
@@ -252,13 +274,59 @@ export async function POST(req: NextRequest) {
         { status: 201 }
       );
     } catch (error) {
-      // Nettoyage de l'image en cas d'erreur
-      await deleteFileFromVercelBlob(featuredImagePath).catch(console.error);
-      throw error;
+      // --- LOGIQUE DE NETTOYAGE EN CAS D'ÉCHEC DE POST (TRY IMBRIQUÉ) ---
+      console.error("Erreur dans le processus de création détaillé:", error);
+
+      // 1. Nettoyer l'image à la une si elle a été uploadée
+      if (featuredImagePath) {
+        try {
+          await deleteFileFromVercelBlob(featuredImagePath);
+          console.log(
+            "Nettoyage: Image à la une temporaire supprimée après échec POST."
+          );
+        } catch (unlinkError) {
+          console.error(
+            "Échec de la suppression de l'image à la une temporaire:",
+            unlinkError
+          );
+        }
+      }
+
+      // 2. Supprimer l'article créé initialement (s'il existe)
+      // et par extension, le répertoire d'images associé
+      if (newPostSlug) {
+        try {
+          // Supprimer le post de la DB
+          await prisma.post.delete({ where: { slug: newPostSlug } });
+          console.log(
+            `Nettoyage: Article temporaire (${newPostSlug}) supprimé de la DB.`
+          );
+
+          // Supprimer le répertoire d'images créé pour ce post
+          const blobDirectoryPrefix = `uploads/editor-images/${newPostSlug}/`;
+          const { blobs } = await list({ prefix: blobDirectoryPrefix });
+          if (blobs.length > 0) {
+            const pathsToDelete = blobs.map((blob) => blob.pathname);
+            await del(pathsToDelete);
+            console.log(
+              `Nettoyage: Répertoire d'images '${blobDirectoryPrefix}' supprimé.`
+            );
+          } else {
+            console.log(
+              `Nettoyage: Aucun image trouvée dans '${blobDirectoryPrefix}' à supprimer.`
+            );
+          }
+        } catch (cleanError) {
+          console.error(
+            `Échec du nettoyage de l'article/répertoire d'images après erreur POST:`,
+            cleanError
+          );
+        }
+      }
+      throw error; // Re-jeter l'erreur pour la gestion globale
     }
   } catch (error) {
-    console.error("Erreur création article:", error);
-
+    console.error("Erreur création article (globale):", error);
     if (error instanceof Error) {
       if (error.message.includes("Catégorie")) {
         return NextResponse.json({ message: error.message }, { status: 400 });
@@ -270,7 +338,6 @@ export async function POST(req: NextRequest) {
         );
       }
     }
-
     return NextResponse.json(
       {
         message: "Erreur lors de la création",

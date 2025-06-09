@@ -1,7 +1,7 @@
-import { put, del } from "@vercel/blob";
+import { put, del, copy } from "@vercel/blob";
 import mime from "mime";
 
-type Folder = "avatars" | "featured-images";
+type Folder = "avatars" | "featured-images" | "editor-images" | "temp";
 
 export async function handleUpload({
   file,
@@ -28,5 +28,23 @@ export async function handleUpload({
 }
 
 export async function deleteFileFromVercelBlob(fileUrl: string) {
-  await del(fileUrl);
+  try {
+    await del(fileUrl);
+  } catch (error) {
+    console.error(`Error deleting blob: ${fileUrl}`, error);
+  }
+}
+
+export async function moveFileInVercelBlob(
+  oldUrl: string,
+  newPath: string
+): Promise<string> {
+  try {
+    const { url: finalUrl } = await copy(oldUrl, newPath, { access: "public" });
+    await del(oldUrl); // Supprimer l'ancienne URL temporaire
+    return finalUrl;
+  } catch (error) {
+    console.error(`Failed to move blob from ${oldUrl} to ${newPath}:`, error);
+    throw new Error(`Failed to move blob: ${error}`);
+  }
 }
