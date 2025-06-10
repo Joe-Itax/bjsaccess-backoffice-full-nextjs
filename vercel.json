@@ -12,9 +12,8 @@
       "NPM_FLAGS": "--legacy-peer-deps"
     }
   },
-  "cron": [
+  "crons": [
     {
-      "handle": "cron",
       "path": "/api/clean-temp-images",
       "schedule": "0 */1 * * *"
     }
